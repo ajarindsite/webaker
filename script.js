@@ -528,11 +528,24 @@ function buildSystemPrompt() {
         iconCDN = '<link href="https://cdn.jsdelivr.net/npm/remixicon@4.0.0/fonts/remixicon.css" rel="stylesheet">';
     }
 
-    return 'Anda adalah AI Expert Web Developer. Tugas: Buat kode web yang FUNGSIONAL dan SIAP PAKAI berdasarkan instruksi user.\n\nAturan WAJIB:\n1. Output HANYA boleh berupa JSON valid, tanpa markdown ```json atau teks lain.\n2. Struktur JSON: {"html": "...", "css": "...", "js": "..."}\n3. File HTML jangan masukkan <style> atau <script> inline, pisahkan ke css dan js.\n4. Jangan ulangi tag <head>, <html>, <body>. Cukup isi tag body (struktur) untuk html.\n5. CSS harus lengkap dengan styling yang modern, responsive, dan FUNGSIONAL.\n6. JS harus FUNGSIONAL (bisa interaksi, validasi form, dll) - BUKAN hanya contoh!\n\nSpesifikasi Teknis:\n- Framework CSS: ' + frameworkVal + '\n- Desain Konsep: ' + styleVal + '\n- Font: ' + fontVal + ' (Via Google Fonts)\n- Icons: ' + iconsVal + ' (Via CDN: ' + iconCDN + ')\n\nInstruksi User: ' + userPrompt + '\n\nPASTIKAN:\n✅ Hasilnya responsive di semua device\n✅ Semua tombol dan form berfungsi\n✅ JavaScript yang dihasilkan FUNGSIONAL (bukan dummy)\n✅ Hasilnya siap pakai untuk di-deploy';
+    return 'Anda adalah AI Expert Web Developer. Buat kode web FUNGSIONAL dan SIAP PAKAI.\n\n' +
+        'Aturan WAJIB:\n' +
+        '1. Output HANYA JSON valid, tanpa markdown.\n' +
+        '2. Struktur: {"html": "...", "css": "...", "js": "..."}\n' +
+        '3. HTML cukup isi tag body, tanpa <style> atau <script> inline.\n' +
+        '4. CSS dan JS dipisahkan.\n' +
+        '5. RESPONSE HARUS SINGKAT! Maksimal 2000 karakter.\n\n' +
+        'Spesifikasi:\n' +
+        '- Framework: ' + frameworkVal + '\n' +
+        '- Desain: ' + styleVal + '\n' +
+        '- Font: ' + fontVal + '\n' +
+        '- Icons: ' + iconsVal + '\n\n' +
+        'Instruksi User: ' + userPrompt + '\n\n' +
+        'PASTIKAN: responsive, semua tombol berfungsi, JS FUNGSIONAL, siap deploy.';
 }
 
 // ============================================================
-// AI ENGINE - API CALLS
+// AI ENGINE - API CALLS (GEMINI 2.5 FLASH)
 // ============================================================
 
 async function generateCode() {
@@ -597,14 +610,15 @@ async function generateCode() {
         }
 
         if (result) {
+            console.log('📥 Response length:', result.length);
             processAIResponse(result);
             updateStats('generate');
-            if (statusLog) statusLog.innerHTML = '✅ Generate sukses! Hasil WEB APP FUNGSIONAL siap pakai! 🚀';
+            if (statusLog) statusLog.innerHTML = '✅ Generate sukses! WEB APP FUNGSIONAL siap pakai! 🚀';
         }
 
     } catch (error) {
+        console.error('❌ Generate Error:', error);
         if (statusLog) statusLog.innerHTML = '❌ Error: ' + error.message;
-        console.error('Generate Error:', error);
     }
 
     state.isGenerating = false;
@@ -614,6 +628,7 @@ async function generateCode() {
     }
 }
 
+// ===== GEMINI 2.5 FLASH =====
 async function callGemini(prompt, apiKey) {
     var response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + apiKey, {
         method: 'POST',
@@ -622,7 +637,7 @@ async function callGemini(prompt, apiKey) {
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: {
                 temperature: 0.7,
-                maxOutputTokens: 8192,
+                maxOutputTokens: 4096,
                 responseMimeType: "application/json"
             }
         })
@@ -641,9 +656,40 @@ async function callGemini(prompt, apiKey) {
     return data.candidates[0].content.parts[0].text;
 }
 
+// ===== GROQ - SUPPORT SEMUA MODEL =====
 async function callGroq(prompt, apiKey) {
     var groqModel = document.getElementById('groqModel');
-    var model = groqModel ? groqModel.value : 'groq/compound'; // DEFAULT ke Compound
+    var model = groqModel ? groqModel.value : 'groq/compound';
+    
+    console.log('📤 Menggunakan model Groq:', model);
+    
+    // Daftar model yang support response_format json_object
+    var jsonSupportModels = [
+        'groq/compound',
+        'groq/compound-mini',
+        'qwen/qwen3.6-27b',
+        'qwen/qwen3.8-27b',
+        'openai/gpt-oss-120b',
+        'openai/gpt-oss-20b'
+    ];
+    
+    // Cek apakah model support JSON mode
+    var supportsJson = jsonSupportModels.includes(model);
+    
+    var requestBody = {
+        model: model,
+        messages: [
+            { role: 'system', content: 'You must respond with valid JSON only. The response must be a valid JSON object with keys: html, css, js. Keep response concise.' },
+            { role: 'user', content: prompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 4096
+    };
+    
+    // Hanya tambahkan response_format jika model mendukung
+    if (supportsJson) {
+        requestBody.response_format = { type: 'json_object' };
+    }
     
     var response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
@@ -651,20 +697,12 @@ async function callGroq(prompt, apiKey) {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + apiKey
         },
-        body: JSON.stringify({
-            model: model,  // ← PAKAI MODEL DARI DROPDOWN
-            messages: [
-                { role: 'system', content: 'You are a helpful AI that only outputs valid JSON. The JSON must be valid and parseable.' },
-                { role: 'user', content: prompt }
-            ],
-            temperature: 0.7,
-            max_tokens: 8192,
-            response_format: { type: 'json_object' }
-        })
+        body: JSON.stringify(requestBody)
     });
 
     if (!response.ok) {
         var error = await response.json();
+        console.error('❌ Groq API Error:', error);
         throw new Error(error.error?.message || 'Groq API Error');
     }
 
@@ -673,22 +711,45 @@ async function callGroq(prompt, apiKey) {
         throw new Error('Tidak ada response dari Groq');
     }
 
-    return data.choices[0].message.content;
+    var content = data.choices[0].message.content;
+    console.log('📥 Groq response length:', content.length);
+    
+    return content;
 }
 
 // ============================================================
-// PROCESS & RENDER
+// PROCESS & RENDER (DENGAN REPAIR JSON + FALLBACK)
 // ============================================================
 
 function processAIResponse(text) {
     try {
+        console.log('📝 Raw response length:', text.length);
+        console.log('📝 Preview:', text.substring(0, 300) + '...');
+        
+        // 1. Bersihkan markdown
         text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        
+        // 2. Coba cari JSON lengkap di dalam teks
+        var jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            var potentialJson = jsonMatch[0];
+            try {
+                JSON.parse(potentialJson);
+                text = potentialJson;
+            } catch (e2) {
+                console.warn('⚠️ JSON belum lengkap, mencoba repair...');
+                text = repairIncompleteJSON(potentialJson);
+            }
+        }
+        
+        // 3. Parse JSON
         var parsed = JSON.parse(text);
         
-        var htmlPart = parsed.html || '';
-        var cssPart = parsed.css || '';
-        var jsPart = parsed.js || '';
-
+        var htmlPart = parsed.html || parsed.HTML || '';
+        var cssPart = parsed.css || parsed.CSS || '';
+        var jsPart = parsed.js || parsed.JS || parsed.javascript || '';
+        
+        // 4. Auto-extract dari HTML
         if (!cssPart && htmlPart) {
             var styleMatch = htmlPart.match(/<style[^>]*>([\s\S]*?)<\/style>/);
             if (styleMatch) {
@@ -703,9 +764,9 @@ function processAIResponse(text) {
                 htmlPart = htmlPart.replace(/<script[^>]*>[\s\S]*?<\/script>/, '');
             }
         }
-
+        
         state.lastResponse = { html: htmlPart, css: cssPart, js: jsPart };
-
+        
         var htmlEditor = document.getElementById('htmlEditor');
         var cssEditor = document.getElementById('cssEditor');
         var jsEditor = document.getElementById('jsEditor');
@@ -713,19 +774,91 @@ function processAIResponse(text) {
         if (htmlEditor) htmlEditor.value = htmlPart;
         if (cssEditor) cssEditor.value = cssPart;
         if (jsEditor) jsEditor.value = jsPart;
-
+        
         updatePreview();
-
+        
         var downloadBtn = document.getElementById('downloadBtn');
         var codesandboxBtn = document.getElementById('codesandboxBtn');
-        
         if (downloadBtn) downloadBtn.disabled = false;
         if (codesandboxBtn) codesandboxBtn.disabled = false;
-
+        
+        console.log('✅ Parse success!');
+        console.log('📊 HTML:', htmlPart.length, 'CSS:', cssPart.length, 'JS:', jsPart.length);
+        
     } catch (e) {
-        console.error('Parse Error:', e, text);
-        throw new Error('Gagal parse JSON dari AI. Coba lagi.');
+        console.error('❌ Parse Error:', e.message);
+        console.error('📝 Full text preview:', text.substring(0, 500));
+        
+        // FALLBACK: Manual extract
+        var manualResult = manualExtract(text);
+        if (manualResult) {
+            console.log('✅ Manual extraction success!');
+            state.lastResponse = manualResult;
+            
+            var htmlEditor = document.getElementById('htmlEditor');
+            var cssEditor = document.getElementById('cssEditor');
+            var jsEditor = document.getElementById('jsEditor');
+            
+            if (htmlEditor) htmlEditor.value = manualResult.html;
+            if (cssEditor) cssEditor.value = manualResult.css;
+            if (jsEditor) jsEditor.value = manualResult.js;
+            
+            updatePreview();
+            
+            var downloadBtn = document.getElementById('downloadBtn');
+            var codesandboxBtn = document.getElementById('codesandboxBtn');
+            if (downloadBtn) downloadBtn.disabled = false;
+            if (codesandboxBtn) codesandboxBtn.disabled = false;
+            return;
+        }
+        
+        throw new Error('Gagal parse JSON dari AI. Coba lagi dengan prompt yang lebih pendek.');
     }
+}
+
+// ===== REPAIR INCOMPLETE JSON =====
+function repairIncompleteJSON(text) {
+    var lines = text.split('\n');
+    var lastLine = lines[lines.length - 1];
+    
+    if (lastLine && !lastLine.includes('"') && !lastLine.includes('}')) {
+        lines.pop();
+    }
+    
+    var fixed = lines.join('\n');
+    var openBraces = (fixed.match(/\{/g) || []).length;
+    var closeBraces = (fixed.match(/\}/g) || []).length;
+    var openBrackets = (fixed.match(/\[/g) || []).length;
+    var closeBrackets = (fixed.match(/\]/g) || []).length;
+    
+    while (openBraces > closeBraces) {
+        fixed += '}';
+        closeBraces++;
+    }
+    while (openBrackets > closeBrackets) {
+        fixed += ']';
+        closeBrackets++;
+    }
+    
+    return fixed;
+}
+
+// ===== MANUAL EXTRACT (FALLBACK) =====
+function manualExtract(text) {
+    try {
+        var htmlMatch = text.match(/"html"\s*:\s*"([\s\S]*?)"(?=\s*[,}])/);
+        var cssMatch = text.match(/"css"\s*:\s*"([\s\S]*?)"(?=\s*[,}])/);
+        var jsMatch = text.match(/"js"\s*:\s*"([\s\S]*?)"(?=\s*[,}])/);
+        
+        var html = htmlMatch ? htmlMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"') : '';
+        var css = cssMatch ? cssMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"') : '';
+        var js = jsMatch ? jsMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"') : '';
+        
+        if (html || css || js) {
+            return { html: html, css: css, js: js };
+        }
+    } catch (e) {}
+    return null;
 }
 
 function updatePreview() {
@@ -908,7 +1041,7 @@ async function downloadZip() {
     zip.file("style.css", css);
     zip.file("script.js", js);
 
-    // Database Templates (simple version)
+    // Database Templates
     var dbTemplates = {
         'database-templates/google-sheets/appscript.js': '// Google Sheets App Script\nfunction createTables() {\n  var ss = SpreadsheetApp.getActiveSpreadsheet();\n  var sheet = ss.getSheetByName(\'Users\');\n  if (!sheet) {\n    sheet = ss.insertSheet(\'Users\');\n    sheet.getRange(\'A1:E1\').setValues([[\'ID\', \'Name\', \'Email\', \'CreatedAt\', \'Status\']]);\n  }\n  sheet = ss.getSheetByName(\'Projects\');\n  if (!sheet) {\n    sheet = ss.insertSheet(\'Projects\');\n    sheet.getRange(\'A1:F1\').setValues([[\'ID\', \'UserID\', \'ProjectName\', \'HTML\', \'CSS\', \'JS\']]);\n  }\n  SpreadsheetApp.getUi().alert(\'✅ Database siap!\');\n}',
         'database-templates/google-sheets/GUIDE.md': '# Google Sheets Setup\n1. Buka https://sheets.google.com\n2. Buat spreadsheet baru\n3. Klik Extensions > Apps Script\n4. Paste kode appscript.js\n5. Klik Save dan Run',
@@ -922,7 +1055,6 @@ async function downloadZip() {
         zip.file(path, dbTemplates[path]);
     }
 
-    // Deploy Guides
     var deployGuides = {
         'deploy-guides/cloudflare-pages.md': '# Deploy ke Cloudflare Pages\n\n1. Upload ke GitHub\n2. Buka Cloudflare Dashboard\n3. Pilih Workers & Pages\n4. Connect ke GitHub\n5. Deploy!',
         'deploy-guides/vercel.md': '# Deploy ke Vercel\n\n1. Upload ke GitHub\n2. Buka Vercel\n3. Import dari GitHub\n4. Deploy!',
