@@ -1,6 +1,63 @@
 /* ============================================================
    ADDITIONAL STYLES FOR ADJARINDO AI GENERATOR
    ============================================================ */
+/* ============================================================
+   STYLING DASAR UNTUK ADJARINDO AI GENERATOR
+   ============================================================ */
+
+/* === BODY & BACKGROUND === */
+body {
+    background: #0f172a !important;
+    color: #f1f5f9 !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+}
+
+/* === GLASSMORPHISM === */
+.glass {
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 16px !important;
+}
+
+/* === MODE BUTTON === */
+.mode-btn {
+    transition: all 0.3s ease;
+}
+.mode-btn.active {
+    background: rgba(59, 130, 246, 0.3) !important;
+    border-color: rgba(96, 165, 250, 0.5) !important;
+    color: white !important;
+}
+
+/* === TAB === */
+.tab-btn {
+    transition: all 0.2s ease;
+}
+.tab-btn.active {
+    border-bottom: 2px solid #3b82f6 !important;
+    color: #60a5fa !important;
+}
+
+/* === LAYOUT === */
+#appContainer, #loginPage, #adminDashboard {
+    background: #0f172a !important;
+}
+
+/* === INPUT & TEXTAREA === */
+input, textarea, select {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #f1f5f9 !important;
+}
+input:focus, textarea:focus, select:focus {
+    outline: none !important;
+    border-color: rgba(59, 130, 246, 0.5) !important;
+}
 
 /* CodeMirror customization - overwrite default */
 .CodeMirror {
