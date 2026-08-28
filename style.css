@@ -176,3 +176,25 @@ input:focus, textarea:focus, select:focus {
 * {
     transition: background-color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
 }
+
+/* ===== PERBAIKAN LAYOUT ===== */
+#loginPage {
+    display: none !important;
+}
+#loginPage.active {
+    display: flex !important;
+}
+
+#adminDashboard {
+    display: none !important;
+}
+#adminDashboard.active {
+    display: block !important;
+}
+
+#appContainer {
+    display: none !important;
+}
+#appContainer.active {
+    display: block !important;
+}
