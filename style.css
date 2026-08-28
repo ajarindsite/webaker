@@ -1,7 +1,4 @@
 /* ============================================================
-   ADDITIONAL STYLES FOR ADJARINDO AI GENERATOR
-   ============================================================ */
-/* ============================================================
    STYLING DASAR UNTUK ADJARINDO AI GENERATOR
    ============================================================ */
 
@@ -59,7 +56,7 @@ input:focus, textarea:focus, select:focus {
     border-color: rgba(59, 130, 246, 0.5) !important;
 }
 
-/* CodeMirror customization - overwrite default */
+/* CodeMirror customization */
 .CodeMirror {
     font-family: 'JetBrains Mono', 'Fira Code', monospace;
     font-size: 13px;
@@ -173,4 +170,9 @@ input:focus, textarea:focus, select:focus {
 /* Login page background */
 #loginPage {
     background: radial-gradient(ellipse at top, #1e293b, #0f172a);
+}
+
+/* Smooth transition untuk semua */
+* {
+    transition: background-color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
 }
