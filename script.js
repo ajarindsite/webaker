@@ -1,5 +1,5 @@
 // ============================================================
-// ADJARINDO AI WEB GENERATOR - FIXED VERSION
+// ADJARINDO AI WEB GENERATOR - FULL SCRIPT (FIXED)
 // ============================================================
 
 // ===== CONFIGURATION =====
@@ -92,10 +92,16 @@ function useToken(token) {
     }
 }
 
-function removeToken(token) {
+function deleteToken(token) {
+    if (token === 'AJARIND2025') {
+        alert('⚠️ Token default tidak bisa dihapus!');
+        return;
+    }
+    if (!confirm(`Hapus token "${token}"?`)) return;
     let tokens = getTokens();
     const filtered = tokens.filter(t => t.token !== token);
     saveTokens(filtered);
+    renderTokens();
 }
 
 // ============================================================
@@ -288,16 +294,6 @@ function addNewToken() {
     alert(`✅ Token berhasil ditambahkan!\n\nToken: ${token}\nBerlaku: ${expiryType === '24h' ? '24 Jam (unlimited use)' : '3x Login (tanpa batas waktu)'}`);
 }
 
-function deleteToken(token) {
-    if (token === 'AJARIND2025') {
-        alert('⚠️ Token default tidak bisa dihapus!');
-        return;
-    }
-    if (!confirm(`Hapus token "${token}"?`)) return;
-    removeToken(token);
-    renderTokens();
-}
-
 function renderTokens() {
     const container = document.getElementById('tokenList');
     const tokens = getTokens();
@@ -342,7 +338,7 @@ function renderTokens() {
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="text-xs text-slate-500">Dipakai: ${tokenData.used}x</span>
-                    ${!isDefault ? `<button onclick="deleteToken('${tokenData.token}')" class="text-red-400 hover:text-red-300 transition">
+                    ${!isDefault ? `<button onclick="window.deleteToken('${tokenData.token}')" class="text-red-400 hover:text-red-300 transition">
                         <i class="fa-solid fa-trash"></i>
                     </button>` : ''}
                 </div>
@@ -399,9 +395,12 @@ function updateStats(type) {
 
 function renderStats() {
     const stats = getStats();
-    document.getElementById('totalUsers').textContent = stats.totalUsers || 0;
-    document.getElementById('totalGenerations').textContent = stats.totalGenerations || 0;
-    document.getElementById('activeUsers').textContent = stats.activeUsers || 0;
+    const el1 = document.getElementById('totalUsers');
+    const el2 = document.getElementById('totalGenerations');
+    const el3 = document.getElementById('activeUsers');
+    if (el1) el1.textContent = stats.totalUsers || 0;
+    if (el2) el2.textContent = stats.totalGenerations || 0;
+    if (el3) el3.textContent = stats.activeUsers || 0;
 }
 
 // ============================================================
@@ -740,6 +739,56 @@ function openInCodeSandbox() {
 }
 
 // ============================================================
+// SETTINGS
+// ============================================================
+
+function getKeys() {
+    return {
+        gemini: localStorage.getItem(STORAGE_KEYS.gemini) || '',
+        groq: localStorage.getItem(STORAGE_KEYS.groq) || ''
+    };
+}
+
+function saveKeys(gemini, groq) {
+    localStorage.setItem(STORAGE_KEYS.gemini, gemini);
+    localStorage.setItem(STORAGE_KEYS.groq, groq);
+}
+
+function initSettings() {
+    const keys = getKeys();
+    const geminiInput = document.getElementById('geminiKeyInput');
+    const groqInput = document.getElementById('groqKeyInput');
+    if (geminiInput) geminiInput.value = keys.gemini;
+    if (groqInput) groqInput.value = keys.groq;
+
+    const settingsBtn = document.getElementById('settingsBtn');
+    const closeSettings = document.getElementById('closeSettings');
+    const saveKeysBtn = document.getElementById('saveKeysBtn');
+
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', () => {
+            document.getElementById('settingsModal').classList.add('modal-open', 'flex');
+        });
+    }
+
+    if (closeSettings) {
+        closeSettings.addEventListener('click', () => {
+            document.getElementById('settingsModal').classList.remove('modal-open', 'flex');
+        });
+    }
+
+    if (saveKeysBtn) {
+        saveKeysBtn.addEventListener('click', () => {
+            const gemini = document.getElementById('geminiKeyInput').value.trim();
+            const groq = document.getElementById('groqKeyInput').value.trim();
+            saveKeys(gemini, groq);
+            alert('✅ API Key berhasil disimpan!');
+            document.getElementById('settingsModal').classList.remove('modal-open', 'flex');
+        });
+    }
+}
+
+// ============================================================
 // DOWNLOAD ZIP
 // ============================================================
 
@@ -754,4 +803,19 @@ async function downloadZip() {
     const zip = new JSZip();
 
     const fontName = document.getElementById('font').value;
-    const fontLink = `<link href="https://fonts.googleapis.com/css2?family=${fontName.replace(/ /g, '+')}:
+    const fontLink = `<link href="https://fonts.googleapis.com/css2?family=${fontName.replace(/ /g, '+')}:wght@400;600;800&display=swap" rel="stylesheet">`;
+    const faLink = `<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">`;
+    
+    let frameworkCDN = '';
+    const framework = document.getElementById('framework').value;
+    if (framework.includes('Tailwind')) {
+        frameworkCDN = '<script src="https://cdn.tailwindcss.com"><\/script>';
+    } else if (framework.includes('Bootstrap')) {
+        frameworkCDN = '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">';
+    } else if (framework.includes('Bulma')) {
+        frameworkCDN = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">';
+    } else if (framework.includes('Materialize')) {
+        frameworkCDN = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">';
+    }
+
+    const fullHtml = `<!DOCTYPE html>\n<html lang="id">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>Generated by Adjarindo AI</title>\n  ${fontLink}\n  ${faLink}\n  ${frameworkCDN}\n  <link rel="stylesheet" href="style.css">\n</head>\n<body>\n${html}\n  <script src="script.js"><\/script>\
