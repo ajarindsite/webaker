@@ -131,18 +131,29 @@ function initAuth() {
     }
     
     showLogin();
-    updateTokenInfo();
     
-    document.getElementById('loginBtn').addEventListener('click', handleLogin);
-    document.getElementById('tokenInput').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') handleLogin();
-    });
+    const loginBtn = document.getElementById('loginBtn');
+    const tokenInput = document.getElementById('tokenInput');
+    
+    if (loginBtn) {
+        loginBtn.addEventListener('click', handleLogin);
+    }
+    if (tokenInput) {
+        tokenInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleLogin();
+        });
+        tokenInput.addEventListener('input', updateTokenInfo);
+    }
 }
 
 function handleLogin() {
-    const token = document.getElementById('tokenInput').value.trim();
+    const tokenInput = document.getElementById('tokenInput');
     const errorEl = document.getElementById('loginError');
     const infoEl = document.getElementById('tokenInfo');
+    
+    if (!tokenInput || !errorEl || !infoEl) return;
+    
+    const token = tokenInput.value.trim();
     
     if (!token) {
         errorEl.textContent = '❌ Masukkan token terlebih dahulu!';
@@ -169,20 +180,29 @@ function handleLogin() {
     showApp();
     errorEl.classList.add('hidden');
     infoEl.classList.add('hidden');
-    document.getElementById('tokenInput').value = '';
+    tokenInput.value = '';
 }
 
 function showLogin() {
-    document.getElementById('loginPage').classList.add('active');
-    document.getElementById('appContainer').classList.remove('active');
-    document.getElementById('adminDashboard').classList.remove('active');
+    const loginPage = document.getElementById('loginPage');
+    const appContainer = document.getElementById('appContainer');
+    const adminDashboard = document.getElementById('adminDashboard');
+    
+    if (loginPage) loginPage.classList.add('active');
+    if (appContainer) appContainer.classList.remove('active');
+    if (adminDashboard) adminDashboard.classList.remove('active');
+    
     updateTokenInfo();
 }
 
 function showApp() {
-    document.getElementById('loginPage').classList.remove('active');
-    document.getElementById('appContainer').classList.add('active');
-    document.getElementById('adminDashboard').classList.remove('active');
+    const loginPage = document.getElementById('loginPage');
+    const appContainer = document.getElementById('appContainer');
+    const adminDashboard = document.getElementById('adminDashboard');
+    
+    if (loginPage) loginPage.classList.remove('active');
+    if (appContainer) appContainer.classList.add('active');
+    if (adminDashboard) adminDashboard.classList.remove('active');
 }
 
 function logout() {
@@ -190,19 +210,31 @@ function logout() {
     state.isLoggedIn = false;
     state.currentToken = null;
     showLogin();
-    document.getElementById('tokenInput').value = '';
+    const tokenInput = document.getElementById('tokenInput');
+    if (tokenInput) tokenInput.value = '';
 }
 
 function updateTokenInfo() {
-    const token = document.getElementById('tokenInput').value.trim();
+    const tokenInput = document.getElementById('tokenInput');
+    if (!tokenInput) return;
+    
+    const token = tokenInput.value.trim();
     const infoContainer = document.getElementById('tokenInfo');
+    
+    if (!infoContainer) return;
+    
     if (token) {
         const validation = isTokenValid(token);
         if (validation.valid && validation.data) {
             infoContainer.classList.remove('hidden');
-            document.getElementById('tokenRemaining').textContent = validation.remaining;
-            document.getElementById('tokenMaxUses').textContent = validation.data.maxUses > 0 ? validation.data.maxUses : '∞';
-            document.getElementById('tokenExpiryDate').textContent = validation.expiryDate;
+            
+            const remainingEl = document.getElementById('tokenRemaining');
+            const maxUsesEl = document.getElementById('tokenMaxUses');
+            const expiryEl = document.getElementById('tokenExpiryDate');
+            
+            if (remainingEl) remainingEl.textContent = validation.remaining;
+            if (maxUsesEl) maxUsesEl.textContent = validation.data.maxUses > 0 ? validation.data.maxUses : '∞';
+            if (expiryEl) expiryEl.textContent = validation.expiryDate;
             return;
         }
     }
@@ -223,24 +255,39 @@ function initAdmin() {
         }
     }
 
-    document.getElementById('adminAccessBtn').addEventListener('click', () => {
-        if (!state.isLoggedIn) return;
-        if (sessionStorage.getItem('admin_session') === 'true') {
-            showAdminDashboard();
-        } else {
-            promptAdminPassword();
-        }
-    });
+    const adminAccessBtn = document.getElementById('adminAccessBtn');
+    if (adminAccessBtn) {
+        adminAccessBtn.addEventListener('click', () => {
+            if (!state.isLoggedIn) return;
+            if (sessionStorage.getItem('admin_session') === 'true') {
+                showAdminDashboard();
+            } else {
+                promptAdminPassword();
+            }
+        });
+    }
 
-    document.getElementById('backToAppBtn').addEventListener('click', () => {
-        document.getElementById('adminDashboard').classList.remove('active');
-        document.getElementById('appContainer').classList.add('active');
-    });
+    const backBtn = document.getElementById('backToAppBtn');
+    if (backBtn) {
+        backBtn.addEventListener('click', () => {
+            const adminDashboard = document.getElementById('adminDashboard');
+            const appContainer = document.getElementById('appContainer');
+            if (adminDashboard) adminDashboard.classList.remove('active');
+            if (appContainer) appContainer.classList.add('active');
+        });
+    }
 
-    document.getElementById('addTokenBtn').addEventListener('click', addNewToken);
-    document.getElementById('newTokenInput').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') addNewToken();
-    });
+    const addBtn = document.getElementById('addTokenBtn');
+    if (addBtn) {
+        addBtn.addEventListener('click', addNewToken);
+    }
+
+    const newTokenInput = document.getElementById('newTokenInput');
+    if (newTokenInput) {
+        newTokenInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') addNewToken();
+        });
+    }
 
     window.addEventListener('hashchange', () => {
         if (window.location.hash === '#admin' && state.isLoggedIn) {
@@ -264,16 +311,23 @@ function promptAdminPassword() {
 }
 
 function showAdminDashboard() {
-    document.getElementById('appContainer').classList.remove('active');
-    document.getElementById('adminDashboard').classList.add('active');
+    const appContainer = document.getElementById('appContainer');
+    const adminDashboard = document.getElementById('adminDashboard');
+    
+    if (appContainer) appContainer.classList.remove('active');
+    if (adminDashboard) adminDashboard.classList.add('active');
+    
     renderTokens();
     renderStats();
 }
 
 function addNewToken() {
     const input = document.getElementById('newTokenInput');
+    if (!input) return;
+    
     const token = input.value.trim();
-    const expiryType = document.getElementById('tokenExpiry').value;
+    const expiryTypeSelect = document.getElementById('tokenExpiry');
+    const expiryType = expiryTypeSelect ? expiryTypeSelect.value : '24h';
     
     if (!token) {
         alert('Masukkan token terlebih dahulu!');
@@ -296,6 +350,8 @@ function addNewToken() {
 
 function renderTokens() {
     const container = document.getElementById('tokenList');
+    if (!container) return;
+    
     const tokens = getTokens();
     const totalTokens = document.getElementById('totalTokens');
     
@@ -417,35 +473,44 @@ function initAI() {
             this.classList.add('active', 'bg-blue-600');
             this.classList.remove('bg-slate-700');
             state.selectedAI = this.dataset.ai;
-            document.getElementById('groqSelector').classList.toggle('hidden', state.selectedAI === 'gemini');
+            const groqSelector = document.getElementById('groqSelector');
+            if (groqSelector) {
+                groqSelector.classList.toggle('hidden', state.selectedAI === 'gemini');
+            }
         });
     });
 }
 
 function buildSystemPrompt() {
-    const framework = document.getElementById('framework').value;
-    const style = document.getElementById('style').value;
-    const font = document.getElementById('font').value;
-    const icons = document.getElementById('icons').value;
-    const userPrompt = document.getElementById('promptInput').value;
+    const framework = document.getElementById('framework');
+    const style = document.getElementById('style');
+    const font = document.getElementById('font');
+    const icons = document.getElementById('icons');
+    const promptInput = document.getElementById('promptInput');
+    
+    const frameworkVal = framework ? framework.value : 'Tailwind CSS (CDN)';
+    const styleVal = style ? style.value : 'Glassmorphism';
+    const fontVal = font ? font.value : 'Plus Jakarta Sans';
+    const iconsVal = icons ? icons.value : 'Font Awesome 6';
+    const userPrompt = promptInput ? promptInput.value : '';
 
     let frameworkCDN = '';
-    if (framework.includes('Tailwind')) {
+    if (frameworkVal.includes('Tailwind')) {
         frameworkCDN = '<script src="https://cdn.tailwindcss.com"><\/script>';
-    } else if (framework.includes('Bootstrap')) {
+    } else if (frameworkVal.includes('Bootstrap')) {
         frameworkCDN = '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">';
-    } else if (framework.includes('Bulma')) {
+    } else if (frameworkVal.includes('Bulma')) {
         frameworkCDN = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">';
-    } else if (framework.includes('Materialize')) {
+    } else if (frameworkVal.includes('Materialize')) {
         frameworkCDN = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">';
     }
 
     let iconCDN = '';
-    if (icons.includes('Font Awesome')) {
+    if (iconsVal.includes('Font Awesome')) {
         iconCDN = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">';
-    } else if (icons.includes('Boxicons')) {
+    } else if (iconsVal.includes('Boxicons')) {
         iconCDN = '<link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">';
-    } else if (icons.includes('Remix')) {
+    } else if (iconsVal.includes('Remix')) {
         iconCDN = '<link href="https://cdn.jsdelivr.net/npm/remixicon@4.0.0/fonts/remixicon.css" rel="stylesheet">';
     }
 
@@ -461,10 +526,10 @@ Aturan WAJIB:
 6. JS harus FUNGSIONAL (bisa interaksi, validasi form, dll) - BUKAN hanya contoh!
 
 Spesifikasi Teknis:
-- Framework CSS: ${framework}
-- Desain Konsep: ${style}
-- Font: ${font} (Via Google Fonts: https://fonts.googleapis.com/css2?family=${font.replace(/ /g, '+')}:wght@400;600;800&display=swap)
-- Icons: ${icons} (Via CDN: ${iconCDN})
+- Framework CSS: ${frameworkVal}
+- Desain Konsep: ${styleVal}
+- Font: ${fontVal} (Via Google Fonts: https://fonts.googleapis.com/css2?family=${fontVal.replace(/ /g, '+')}:wght@400;600;800&display=swap)
+- Icons: ${iconsVal} (Via CDN: ${iconCDN})
 
 Instruksi User: ${userPrompt}
 
@@ -490,7 +555,13 @@ PASTIKAN:
 // ============================================================
 
 async function generateCode() {
-    const prompt = document.getElementById('promptInput').value.trim();
+    const promptInput = document.getElementById('promptInput');
+    if (!promptInput) {
+        alert('Form tidak ditemukan!');
+        return;
+    }
+    
+    const prompt = promptInput.value.trim();
     if (!prompt) {
         alert('Masukkan deskripsi web yang ingin dibuat!');
         return;
@@ -509,26 +580,28 @@ async function generateCode() {
     const statusLog = document.getElementById('statusLog');
     const generateBtn = document.getElementById('generateBtn');
 
-    statusLog.innerHTML = '⏳ Menghubungi AI...';
-    generateBtn.disabled = true;
-    generateBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Generating...';
+    if (statusLog) statusLog.innerHTML = '⏳ Menghubungi AI...';
+    if (generateBtn) {
+        generateBtn.disabled = true;
+        generateBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Generating...';
+    }
 
     try {
         let result = null;
         
         if (state.selectedAI === 'gemini' && keys.gemini) {
-            statusLog.innerHTML = '🤖 Menggunakan Gemini 2.5 Flash...';
+            if (statusLog) statusLog.innerHTML = '🤖 Menggunakan Gemini 2.5 Flash...';
             result = await callGemini(systemPrompt, keys.gemini);
         } else if (state.selectedAI === 'groq' && keys.groq) {
-            statusLog.innerHTML = '⚡ Menggunakan Groq...';
+            if (statusLog) statusLog.innerHTML = '⚡ Menggunakan Groq...';
             result = await callGroq(systemPrompt, keys.groq);
         } else {
             if (keys.gemini) {
                 try {
-                    statusLog.innerHTML = '🤖 Mencoba Gemini...';
+                    if (statusLog) statusLog.innerHTML = '🤖 Mencoba Gemini...';
                     result = await callGemini(systemPrompt, keys.gemini);
                 } catch (e) {
-                    statusLog.innerHTML = '⚠️ Gemini error, beralih ke Groq...';
+                    if (statusLog) statusLog.innerHTML = '⚠️ Gemini error, beralih ke Groq...';
                     if (keys.groq) {
                         result = await callGroq(systemPrompt, keys.groq);
                     } else {
@@ -545,17 +618,19 @@ async function generateCode() {
         if (result) {
             processAIResponse(result);
             updateStats('generate');
-            statusLog.innerHTML = '✅ Generate sukses! Hasil WEB APP FUNGSIONAL siap pakai! 🚀';
+            if (statusLog) statusLog.innerHTML = '✅ Generate sukses! Hasil WEB APP FUNGSIONAL siap pakai! 🚀';
         }
 
     } catch (error) {
-        statusLog.innerHTML = `❌ Error: ${error.message}`;
+        if (statusLog) statusLog.innerHTML = `❌ Error: ${error.message}`;
         console.error('Generate Error:', error);
     }
 
     state.isGenerating = false;
-    generateBtn.disabled = false;
-    generateBtn.innerHTML = '<i class="fa-solid fa-bolt mr-2"></i>Generate Kode';
+    if (generateBtn) {
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = '<i class="fa-solid fa-bolt mr-2"></i>Generate Kode';
+    }
 }
 
 async function callGemini(prompt, apiKey) {
@@ -586,7 +661,8 @@ async function callGemini(prompt, apiKey) {
 }
 
 async function callGroq(prompt, apiKey) {
-    const model = document.getElementById('groqModel').value;
+    const groqModel = document.getElementById('groqModel');
+    const model = groqModel ? groqModel.value : 'mixtral-8x7b-32768';
     
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
@@ -649,14 +725,21 @@ function processAIResponse(text) {
 
         state.lastResponse = { html: htmlPart, css: cssPart, js: jsPart };
 
-        document.getElementById('htmlEditor').value = htmlPart;
-        document.getElementById('cssEditor').value = cssPart;
-        document.getElementById('jsEditor').value = jsPart;
+        const htmlEditor = document.getElementById('htmlEditor');
+        const cssEditor = document.getElementById('cssEditor');
+        const jsEditor = document.getElementById('jsEditor');
+        
+        if (htmlEditor) htmlEditor.value = htmlPart;
+        if (cssEditor) cssEditor.value = cssPart;
+        if (jsEditor) jsEditor.value = jsPart;
 
         updatePreview();
 
-        document.getElementById('downloadBtn').disabled = false;
-        document.getElementById('codesandboxBtn').disabled = false;
+        const downloadBtn = document.getElementById('downloadBtn');
+        const codesandboxBtn = document.getElementById('codesandboxBtn');
+        
+        if (downloadBtn) downloadBtn.disabled = false;
+        if (codesandboxBtn) codesandboxBtn.disabled = false;
 
     } catch (e) {
         console.error('Parse Error:', e, text);
@@ -665,16 +748,23 @@ function processAIResponse(text) {
 }
 
 function updatePreview() {
-    const html = document.getElementById('htmlEditor').value;
-    const css = document.getElementById('cssEditor').value;
-    const js = document.getElementById('jsEditor').value;
+    const htmlEditor = document.getElementById('htmlEditor');
+    const cssEditor = document.getElementById('cssEditor');
+    const jsEditor = document.getElementById('jsEditor');
+    
+    const html = htmlEditor ? htmlEditor.value : '';
+    const css = cssEditor ? cssEditor.value : '';
+    const js = jsEditor ? jsEditor.value : '';
 
-    const fontName = document.getElementById('font').value;
+    const fontSelect = document.getElementById('font');
+    const frameworkSelect = document.getElementById('framework');
+    
+    const fontName = fontSelect ? fontSelect.value : 'Plus Jakarta Sans';
     const fontLink = `<link href="https://fonts.googleapis.com/css2?family=${fontName.replace(/ /g, '+')}:wght@400;600;800&display=swap" rel="stylesheet">`;
     const faLink = `<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">`;
     
     let frameworkCDN = '';
-    const framework = document.getElementById('framework').value;
+    const framework = frameworkSelect ? frameworkSelect.value : 'Tailwind CSS (CDN)';
     if (framework.includes('Tailwind')) {
         frameworkCDN = '<script src="https://cdn.tailwindcss.com"><\/script>';
     } else if (framework.includes('Bootstrap')) {
@@ -701,12 +791,14 @@ function updatePreview() {
     `;
 
     const iframe = document.getElementById('previewFrame');
-    if (iframe.src && iframe.src.startsWith('blob:')) {
-        URL.revokeObjectURL(iframe.src);
+    if (iframe) {
+        if (iframe.src && iframe.src.startsWith('blob:')) {
+            URL.revokeObjectURL(iframe.src);
+        }
+        const blob = new Blob([fullHtml], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        iframe.src = url;
     }
-    const blob = new Blob([fullHtml], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    iframe.src = url;
 }
 
 // ============================================================
@@ -715,7 +807,10 @@ function updatePreview() {
 
 function initEditors() {
     ['htmlEditor', 'cssEditor', 'jsEditor'].forEach(id => {
-        document.getElementById(id).addEventListener('input', updatePreview);
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', updatePreview);
+        }
     });
 }
 
@@ -724,9 +819,13 @@ function initEditors() {
 // ============================================================
 
 function openInCodeSandbox() {
-    const html = document.getElementById('htmlEditor').value;
-    const css = document.getElementById('cssEditor').value;
-    const js = document.getElementById('jsEditor').value;
+    const htmlEditor = document.getElementById('htmlEditor');
+    const cssEditor = document.getElementById('cssEditor');
+    const jsEditor = document.getElementById('jsEditor');
+    
+    const html = htmlEditor ? htmlEditor.value : '';
+    const css = cssEditor ? cssEditor.value : '';
+    const js = jsEditor ? jsEditor.value : '';
 
     const files = {
         'index.html': `<!DOCTYPE html>\n<html>\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>Adjarindo AI</title>\n  <style>${css}</style>\n</head>\n<body>\n${html}\n  <script>${js}<\/script>\n</body>\n</html>`,
@@ -771,23 +870,28 @@ function initSettings() {
 
     if (settingsBtn) {
         settingsBtn.addEventListener('click', () => {
-            document.getElementById('settingsModal').classList.add('modal-open', 'flex');
+            const modal = document.getElementById('settingsModal');
+            if (modal) modal.classList.add('modal-open', 'flex');
         });
     }
 
     if (closeSettings) {
         closeSettings.addEventListener('click', () => {
-            document.getElementById('settingsModal').classList.remove('modal-open', 'flex');
+            const modal = document.getElementById('settingsModal');
+            if (modal) modal.classList.remove('modal-open', 'flex');
         });
     }
 
     if (saveKeysBtn) {
         saveKeysBtn.addEventListener('click', () => {
-            const gemini = document.getElementById('geminiKeyInput').value.trim();
-            const groq = document.getElementById('groqKeyInput').value.trim();
-            saveKeys(gemini, groq);
+            const gemini = document.getElementById('geminiKeyInput');
+            const groq = document.getElementById('groqKeyInput');
+            const geminiVal = gemini ? gemini.value.trim() : '';
+            const groqVal = groq ? groq.value.trim() : '';
+            saveKeys(geminiVal, groqVal);
             alert('✅ API Key berhasil disimpan!');
-            document.getElementById('settingsModal').classList.remove('modal-open', 'flex');
+            const modal = document.getElementById('settingsModal');
+            if (modal) modal.classList.remove('modal-open', 'flex');
         });
     }
 }
@@ -798,20 +902,27 @@ function initSettings() {
 
 async function downloadZip() {
     const statusLog = document.getElementById('statusLog');
-    statusLog.innerHTML = '⏳ Mengemas file ZIP...';
+    if (statusLog) statusLog.innerHTML = '⏳ Mengemas file ZIP...';
 
-    const html = document.getElementById('htmlEditor').value;
-    const css = document.getElementById('cssEditor').value;
-    const js = document.getElementById('jsEditor').value;
+    const htmlEditor = document.getElementById('htmlEditor');
+    const cssEditor = document.getElementById('cssEditor');
+    const jsEditor = document.getElementById('jsEditor');
+    
+    const html = htmlEditor ? htmlEditor.value : '';
+    const css = cssEditor ? cssEditor.value : '';
+    const js = jsEditor ? jsEditor.value : '';
 
     const zip = new JSZip();
 
-    const fontName = document.getElementById('font').value;
+    const fontSelect = document.getElementById('font');
+    const frameworkSelect = document.getElementById('framework');
+    
+    const fontName = fontSelect ? fontSelect.value : 'Plus Jakarta Sans';
     const fontLink = `<link href="https://fonts.googleapis.com/css2?family=${fontName.replace(/ /g, '+')}:wght@400;600;800&display=swap" rel="stylesheet">`;
     const faLink = `<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">`;
     
     let frameworkCDN = '';
-    const framework = document.getElementById('framework').value;
+    const framework = frameworkSelect ? frameworkSelect.value : 'Tailwind CSS (CDN)';
     if (framework.includes('Tailwind')) {
         frameworkCDN = '<script src="https://cdn.tailwindcss.com"><\/script>';
     } else if (framework.includes('Bootstrap')) {
@@ -864,10 +975,10 @@ async function downloadZip() {
         a.download = 'Adjarindo_Web_Project.zip';
         a.click();
         URL.revokeObjectURL(a.href);
-        statusLog.innerHTML = '✅ ZIP berhasil diunduh!';
+        if (statusLog) statusLog.innerHTML = '✅ ZIP berhasil diunduh!';
     } catch (error) {
         console.error('Zip Error:', error);
-        statusLog.innerHTML = '❌ Gagal membuat ZIP: ' + error.message;
+        if (statusLog) statusLog.innerHTML = '❌ Gagal membuat ZIP: ' + error.message;
     }
 }
 
@@ -911,10 +1022,12 @@ function initTabs() {
             
             document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
             const tabId = this.dataset.tab + 'Tab';
-            document.getElementById(tabId).classList.remove('hidden');
+            const target = document.getElementById(tabId);
+            if (target) target.classList.remove('hidden');
             
             if (this.dataset.tab === 'html') {
-                document.getElementById('htmlEditor').focus();
+                const editor = document.getElementById('htmlEditor');
+                if (editor) editor.focus();
             }
         });
     });
@@ -944,9 +1057,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (downloadBtn) downloadBtn.addEventListener('click', downloadZip);
     if (codesandboxBtn) codesandboxBtn.addEventListener('click', openInCodeSandbox);
     if (logoutBtn) logoutBtn.addEventListener('click', logout);
-    
-    const tokenInput = document.getElementById('tokenInput');
-    if (tokenInput) tokenInput.addEventListener('input', updateTokenInfo);
     
     console.log('✅ Adjarindo AI Generator ready!');
 });
