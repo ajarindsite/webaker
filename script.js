@@ -1,6 +1,106 @@
 // ============================================================
 // ADJARINDO AI GENERATOR - VERSI SEMPURNA (FIXED)
 // ============================================================
+// ============================================================
+// AUTHENTICATION SYSTEM
+// ============================================================
+
+function initAuth() {
+    // Hapus data login sebelumnya (buat bersih)
+    localStorage.removeItem('adjarindo_token');
+    sessionStorage.removeItem('admin_session');
+    
+    // Tampilkan login
+    showLogin();
+    
+    // Event listener untuk tombol login
+    const loginBtn = document.getElementById('loginBtn');
+    const tokenInput = document.getElementById('tokenInput');
+    
+    if (loginBtn) {
+        loginBtn.addEventListener('click', handleLogin);
+    }
+    if (tokenInput) {
+        tokenInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') handleLogin();
+        });
+    }
+}
+
+function handleLogin() {
+    const tokenInput = document.getElementById('tokenInput');
+    const errorEl = document.getElementById('loginError');
+    
+    if (!tokenInput) return;
+    
+    const token = tokenInput.value.trim();
+    
+    if (!token) {
+        if (errorEl) {
+            errorEl.textContent = '❌ Masukkan token terlebih dahulu!';
+            errorEl.classList.remove('hidden');
+        }
+        return;
+    }
+    
+    // Cek token (hardcoded untuk demo)
+    if (token === 'AJARIND2025') {
+        localStorage.setItem('adjarindo_token', token);
+        showApp();
+        if (errorEl) errorEl.classList.add('hidden');
+    } else {
+        if (errorEl) {
+            errorEl.textContent = '❌ Token salah! Hubungi admin.';
+            errorEl.classList.remove('hidden');
+        }
+    }
+}
+
+function showLogin() {
+    const loginPage = document.getElementById('loginPage');
+    const appContainer = document.getElementById('appContainer');
+    const adminDashboard = document.getElementById('adminDashboard');
+    
+    if (loginPage) {
+        loginPage.classList.add('active');
+        loginPage.style.display = 'flex';
+    }
+    if (appContainer) {
+        appContainer.classList.remove('active');
+        appContainer.style.display = 'none';
+    }
+    if (adminDashboard) {
+        adminDashboard.classList.remove('active');
+        adminDashboard.style.display = 'none';
+    }
+}
+
+function showApp() {
+    const loginPage = document.getElementById('loginPage');
+    const appContainer = document.getElementById('appContainer');
+    const adminDashboard = document.getElementById('adminDashboard');
+    
+    if (loginPage) {
+        loginPage.classList.remove('active');
+        loginPage.style.display = 'none';
+    }
+    if (appContainer) {
+        appContainer.classList.add('active');
+        appContainer.style.display = 'block';
+    }
+    if (adminDashboard) {
+        adminDashboard.classList.remove('active');
+        adminDashboard.style.display = 'none';
+    }
+}
+
+function logout() {
+    localStorage.removeItem('adjarindo_token');
+    sessionStorage.removeItem('admin_session');
+    showLogin();
+    const tokenInput = document.getElementById('tokenInput');
+    if (tokenInput) tokenInput.value = '';
+}
 
 // ===== STATE =====
 let currentMode = 'standar';
@@ -253,16 +353,25 @@ function useForNext() {
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', function() {
+    // AUTH (PALING PERTAMA)
+    initAuth();
+    
+    // Mode
     setMode('standar');
-
+    
+    // Template
     const templateSelect = document.getElementById('templateSelect');
     if (templateSelect) {
         templateSelect.addEventListener('change', applyTemplate);
         applyTemplate();
     }
-
+    
+    // Multi-tab
     const btnNext = document.getElementById('btnNext');
     if (btnNext) btnNext.addEventListener('click', useForNext);
-
     switchTab('prota');
+    
+    // Tombol logout
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) logoutBtn.addEventListener('click', logout);
 });
