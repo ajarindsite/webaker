@@ -145,16 +145,6 @@
         }
         #appContainer.active { display: block; }
         
-        /* Token expiry badge */
-        .token-expiry-badge {
-            font-size: 10px;
-            padding: 2px 8px;
-            border-radius: 12px;
-        }
-        .token-expiry-badge.valid { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
-        .token-expiry-badge.expired { background: rgba(239, 68, 68, 0.2); color: #f87171; }
-        .token-expiry-badge.limited { background: rgba(251, 191, 36, 0.2); color: #fbbf24; }
-        
         /* Responsive */
         @media (max-width: 768px) {
             .tooltip-box { width: 200px; font-size: 10px; }
@@ -173,7 +163,6 @@
             </svg>
             <h2 class="text-2xl font-bold">Adjarindo AI Generator</h2>
             <p class="text-sm text-slate-400 mt-1">Masukkan token untuk mengakses</p>
-            <p class="text-xs text-slate-500 mt-1">💡 Token berlaku 24 jam atau 3x login</p>
         </div>
         
         <div class="space-y-4">
@@ -183,11 +172,7 @@
             <button id="loginBtn" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 py-3 rounded-lg font-bold transition transform hover:scale-[1.02]">
                 <i class="fa-solid fa-unlock mr-2"></i>Akses Generator
             </button>
-            <p id="loginError" class="text-red-400 text-sm text-center hidden">❌ Token tidak valid, expired, atau sudah melewati batas penggunaan!</p>
-            <div id="tokenInfo" class="text-xs text-slate-500 text-center hidden">
-                <p>Sisa penggunaan: <span id="tokenRemaining">0</span> dari <span id="tokenMaxUses">0</span></p>
-                <p>Berlaku hingga: <span id="tokenExpiryDate">-</span></p>
-            </div>
+            <p id="loginError" class="text-red-400 text-sm text-center hidden">❌ Token salah! Hubungi admin untuk mendapatkan token.</p>
             <p class="text-xs text-slate-500 text-center mt-4">Hubungi admin: <a href="https://wa.me/6282112038795" class="text-blue-400 hover:underline">0821-1203-8795</a></p>
         </div>
     </div>
@@ -204,7 +189,7 @@
         </div>
         
         <!-- Statistik -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div class="glass p-6 rounded-2xl text-center">
                 <p class="text-3xl font-bold text-blue-400" id="totalUsers">0</p>
                 <p class="text-sm text-slate-400">Total Pengguna</p>
@@ -217,10 +202,6 @@
                 <p class="text-3xl font-bold text-purple-400" id="activeUsers">0</p>
                 <p class="text-sm text-slate-400">Aktif Hari Ini</p>
             </div>
-            <div class="glass p-6 rounded-2xl text-center">
-                <p class="text-3xl font-bold text-orange-400" id="totalTokens">0</p>
-                <p class="text-sm text-slate-400">Total Token Aktif</p>
-            </div>
         </div>
         
         <!-- Generate Token -->
@@ -230,15 +211,11 @@
                 <input type="text" id="newTokenInput" 
                        class="flex-1 bg-slate-800/50 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                        placeholder="Ketik token baru (contoh: AJARIND_2025_001)">
-                <select id="tokenExpiry" class="bg-slate-800/50 border border-slate-700 rounded-lg p-3 text-white focus:outline-none focus:border-blue-500">
-                    <option value="24h">⏰ 24 Jam (unlimited use)</option>
-                    <option value="3x">🔢 3x Login (tanpa batas waktu)</option>
-                </select>
                 <button id="addTokenBtn" class="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg font-bold transition whitespace-nowrap">
                     <i class="fa-solid fa-plus mr-2"></i>Tambah Token
                 </button>
             </div>
-            <p class="text-xs text-slate-400 mt-2">💡 Token berlaku 24 jam (unlimited use) atau 3x login (tanpa batas waktu).</p>
+            <p class="text-xs text-slate-400 mt-2">💡 Token bisa berupa apapun. Berikan ke pengguna yang diizinkan.</p>
         </div>
         
         <!-- Daftar Token -->
@@ -247,7 +224,7 @@
             <div id="tokenList" class="space-y-2 max-h-60 overflow-y-auto">
                 <!-- Token akan muncul di sini -->
             </div>
-            <p class="text-xs text-slate-400 mt-2">⚠️ Token default: <span class="text-blue-400">AJARIND2025</span> (24 jam, unlimited)</p>
+            <p class="text-xs text-slate-400 mt-2">⚠️ Token default: <span class="text-blue-400">AJARIND2025</span> (jangan dihapus)</p>
         </div>
     </div>
 </div>
