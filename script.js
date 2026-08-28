@@ -1,5 +1,5 @@
 // ============================================================
-// ADJARINDO AI WEB GENERATOR - FULL SCRIPT
+// ADJARINDO AI WEB GENERATOR - FULL SCRIPT (FIXED)
 // ============================================================
 
 // ===== CONFIGURATION =====
@@ -484,6 +484,7 @@ PASTIKAN:
 ✅ Hasilnya siap pakai untuk di-deploy
 `;
 }
+
 // ============================================================
 // AI ENGINE - API CALLS
 // ============================================================
@@ -926,28 +927,14 @@ function initTabs() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Adjarindo AI Generator starting...');
     
-    // Auth
     initAuth();
-    
-    // Admin
     initAdmin();
-    
-    // AI
     initAI();
-    
-    // Editors
     initEditors();
-    
-    // Settings
     initSettings();
-    
-    // PWA
     initPWA();
-    
-    // Tabs
     initTabs();
     
-    // Buttons
     const generateBtn = document.getElementById('generateBtn');
     const downloadBtn = document.getElementById('downloadBtn');
     const codesandboxBtn = document.getElementById('codesandboxBtn');
@@ -958,7 +945,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (codesandboxBtn) codesandboxBtn.addEventListener('click', openInCodeSandbox);
     if (logoutBtn) logoutBtn.addEventListener('click', logout);
     
-    // Update token info on input
     const tokenInput = document.getElementById('tokenInput');
     if (tokenInput) tokenInput.addEventListener('input', updateTokenInfo);
     
