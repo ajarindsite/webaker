@@ -1,4 +1,192 @@
 // ============================================================
+// ADJARINDO AI WEB GENERATOR - FULL SCRIPT
+// ============================================================
+
+// ===== CONFIGURATION =====
+const DEFAULT_TOKENS = ['AJARIND2025', 'ADMIN123'];
+const STORAGE_KEYS = {
+    tokens: 'adjarindo_tokens',
+    stats: 'adjarindo_stats',
+    gemini: 'gemini_key',
+    groq: 'groq_key'
+};
+
+// ===== STATE =====
+let state = {
+    isLoggedIn: false,
+    selectedAI: 'gemini',
+    lastResponse: { html: '', css: '', js: '' },
+    isGenerating: false
+};
+
+// ============================================================
+// AUTHENTICATION SYSTEM
+// ============================================================
+
+function initAuth() {
+    // Load tokens from localStorage
+    let tokens = JSON.parse(localStorage.getItem(STORAGE_KEYS.tokens) || '[]');
+    if (tokens.length === 0) {
+        tokens = DEFAULT_TOKENS;
+        localStorage.setItem(STORAGE_KEYS.tokens, JSON.stringify(tokens));
+    }
+
+    // Check if user is logged in
+    const savedToken = localStorage.getItem('adjarindo_token');
+    if (savedToken && tokens.includes(savedToken)) {
+        state.isLoggedIn = true;
+        showApp();
+    } else {
+        showLogin();
+    }
+
+    // Login button
+    document.getElementById('loginBtn').addEventListener('click', handleLogin);
+    document.getElementById('tokenInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleLogin();
+    });
+}
+
+function handleLogin() {
+    const token = document.getElementById('tokenInput').value.trim();
+    const tokens = JSON.parse(localStorage.getItem(STORAGE_KEYS.tokens) || '[]');
+    
+    if (tokens.includes(token)) {
+        localStorage.setItem('adjarindo_token', token);
+        state.isLoggedIn = true;
+        
+        // Update stats
+        updateStats('login');
+        
+        showApp();
+        document.getElementById('loginError').classList.add('hidden');
+    } else {
+        document.getElementById('loginError').classList.remove('hidden');
+    }
+}
+
+function showLogin() {
+    document.getElementById('loginPage').classList.add('active');
+    document.getElementById('appContainer').classList.remove('active');
+    document.getElementById('adminDashboard').classList.remove('active');
+}
+
+function showApp() {
+    document.getElementById('loginPage').classList.remove('active');
+    document.getElementById('appContainer').classList.add('active');
+    document.getElementById('adminDashboard').classList.remove('active');
+}
+
+function logout() {
+    localStorage.removeItem('adjarindo_token');
+    state.isLoggedIn = false;
+    showLogin();
+    document.getElementById('tokenInput').value = '';
+}
+
+// ============================================================
+// ADMIN DASHBOARD
+// ============================================================
+
+function initAdmin() {
+    // Admin access via #admin or button
+    const hash = window.location.hash;
+    if (hash === '#admin') {
+        showAdminDashboard();
+    }
+
+    document.getElementById('adminAccessBtn').addEventListener('click', () => {
+        if (state.isLoggedIn) {
+            showAdminDashboard();
+        }
+    });
+
+    document.getElementById('backToAppBtn').addEventListener('click', () => {
+        document.getElementById('adminDashboard').classList.remove('active');
+        document.getElementById('appContainer').classList.add('active');
+    });
+
+    // Add token
+    document.getElementById('addTokenBtn').addEventListener('click', addNewToken);
+    document.getElementById('newTokenInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') addNewToken();
+    });
+
+    // Render tokens
+    renderTokens();
+    renderStats();
+
+    // Listen for hash changes
+    window.addEventListener('hashchange', () => {
+        if (window.location.hash === '#admin' && state.isLoggedIn) {
+            showAdminDashboard();
+        }
+    });
+}
+
+function showAdminDashboard() {
+    document.getElementById('appContainer').classList.remove('active');
+    document.getElementById('adminDashboard').classList.add('active');
+    renderTokens();
+    renderStats();
+}
+
+function addNewToken() {
+    const input = document.getElementById('newTokenInput');
+    const token = input.value.trim();
+    
+    if (!token) {
+        alert('Masukkan token terlebih dahulu!');
+        return;
+    }
+
+    let tokens = JSON.parse(localStorage.getItem(STORAGE_KEYS.tokens) || '[]');
+    if (tokens.includes(token)) {
+        alert('Token sudah ada!');
+        return;
+    }
+
+    tokens.push(token);
+    localStorage.setItem(STORAGE_KEYS.tokens, JSON.stringify(tokens));
+    input.value = '';
+    renderTokens();
+    alert('✅ Token berhasil ditambahkan!');
+}
+
+function deleteToken(token) {
+    if (token === 'AJARIND2025') {
+        alert('⚠️ Token default tidak bisa dihapus!');
+        return;
+    }
+
+    if (!confirm(`Hapus token "${token}"?`)) return;
+
+    let tokens = JSON.parse(localStorage.getItem(STORAGE_KEYS.tokens) || '[]');
+    tokens = tokens.filter(t => t !== token);
+    localStorage.setItem(STORAGE_KEYS.tokens, JSON.stringify(tokens));
+    renderTokens();
+}
+
+function renderTokens() {
+    const container = document.getElementById('tokenList');
+    const tokens = JSON.parse(localStorage.getItem(STORAGE_KEYS.tokens) || '[]');
+    
+    if (tokens.length === 0) {
+        container.innerHTML = '<p class="text-slate-400 text-sm">Belum ada token. Tambahkan token baru di atas.</p>';
+        return;
+    }
+
+    container.innerHTML = tokens.map(token => `
+        <div class="flex justify-between items-center glass p-3 rounded-lg hover:bg-white/5 transition">
+            <span class="font-mono text-sm text-blue-300">${token}</span>
+            <button onclick="deleteToken('${token}')" class="text-red-400 hover:text-red-300 transition ${token === 'AJARIND2025' ? 'opacity-50 cursor-not-allowed' : ''}" ${token === 'AJARIND2025' ? 'disabled' : ''}>
+                <i class="fa-solid fa-trash"></i>
+            </button>
+        </div>
+    `).join('');
+}
+
+// ============================================================
 // STATISTICS SYSTEM
 // ============================================================
 
@@ -25,7 +213,7 @@ function updateStats(type) {
 
     if (type === 'login') {
         // Count unique users (based on token)
-        const tokens = getTokens();
+        const tokens = JSON.parse(localStorage.getItem(STORAGE_KEYS.tokens) || '[]');
         stats.totalUsers = tokens.length;
         
         // Active users today
@@ -114,15 +302,15 @@ function buildSystemPrompt() {
     }
 
     return `
-Anda adalah AI Expert Web Developer. Tugas: Buat kode web yang FUNGSIONAL dan SIAP PAKAI berdasarkan instruksi user.
+Anda adalah AI Expert Web Developer. Tugas: Buat kode web berdasarkan instruksi user.
 
 Aturan WAJIB:
 1. Output HANYA boleh berupa JSON valid, tanpa markdown \`\`\`json atau teks lain.
 2. Struktur JSON: {"html": "...", "css": "...", "js": "..."}
 3. File HTML jangan masukkan <style> atau <script> inline, pisahkan ke css dan js.
 4. Jangan ulangi tag <head>, <html>, <body>. Cukup isi tag body (struktur) untuk html.
-5. CSS harus lengkap dengan styling yang modern, responsive, dan FUNGSIONAL.
-6. JS harus FUNGSIONAL (bisa interaksi, validasi form, dll) - BUKAN hanya contoh!
+5. CSS harus lengkap dengan styling yang modern dan responsive.
+6. JS harus fungsional (jika ada interaksi).
 
 Spesifikasi Teknis:
 - Framework CSS: ${framework}
@@ -141,11 +329,7 @@ Tips Desain:
 - Minimalis White: background putih, teks gelap
 - Retro Wave: warna neon, font bold, border glow
 
-PASTIKAN:
-✅ Hasilnya responsive di semua device
-✅ Semua tombol dan form berfungsi
-✅ JavaScript yang dihasilkan FUNGSIONAL (bukan dummy)
-✅ Hasilnya siap pakai untuk di-deploy
+Pastikan hasilnya responsive dan professional!
 `;
 }
 
@@ -206,7 +390,7 @@ async function generateCode() {
         if (result) {
             processAIResponse(result);
             updateStats('generate');
-            statusLog.innerHTML = '✅ Generate sukses! Hasil WEB APP FUNGSIONAL siap pakai! 🚀';
+            statusLog.innerHTML = '✅ Generate sukses! Bisa download atau edit kode.';
         }
 
     } catch (error) {
@@ -258,7 +442,7 @@ async function callGroq(prompt, apiKey) {
         body: JSON.stringify({
             model: model,
             messages: [
-                { role: 'system', content: 'You are a helpful AI that only outputs valid JSON. The JSON must be valid and parseable.' },
+                { role: 'system', content: 'You are a helpful AI that only outputs valid JSON.' },
                 { role: 'user', content: prompt }
             ],
             temperature: 0.7,
@@ -411,7 +595,7 @@ function openInCodeSandbox() {
 }
 
 // ============================================================
-// DOWNLOAD ZIP (dengan template database lengkap)
+// DOWNLOAD ZIP
 // ============================================================
 
 async function downloadZip() {
@@ -447,25 +631,365 @@ async function downloadZip() {
     zip.file("style.css", css);
     zip.file("script.js", js);
 
-    // Database Templates (lengkap)
+    // Database Templates
     const dbTemplates = {
-        'database-templates/google-sheets/appscript.js': `// ============================================================\n// GOOGLE SHEETS - App Script untuk Database\n// ============================================================\n// Cara pakai:\n// 1. Buka https://sheets.google.com\n// 2. Buat spreadsheet baru\n// 3. Klik Extensions > Apps Script\n// 4. Paste kode ini, klik Save, lalu Run\n\nfunction createTables() {\n  const ss = SpreadsheetApp.getActiveSpreadsheet();\n  \n  // Create Users sheet\n  let sheet = ss.getSheetByName('Users');\n  if (!sheet) {\n    sheet = ss.insertSheet('Users');\n    sheet.getRange('A1:E1').setValues([\n      ['ID', 'Name', 'Email', 'CreatedAt', 'Status']\n    ]);\n    sheet.setFrozenRows(1);\n  }\n  \n  // Create Projects sheet\n  sheet = ss.getSheetByName('Projects');\n  if (!sheet) {\n    sheet = ss.insertSheet('Projects');\n    sheet.getRange('A1:F1').setValues([\n      ['ID', 'UserID', 'ProjectName', 'HTML', 'CSS', 'JS']\n    ]);\n    sheet.setFrozenRows(1);\n  }\n  \n  SpreadsheetApp.getUi().alert('✅ Database siap! Tabel Users dan Projects telah dibuat.');\n}\n\nfunction saveProject(userId, projectName, html, css, js) {\n  const ss = SpreadsheetApp.getActiveSpreadsheet();\n  const sheet = ss.getSheetByName('Projects');\n  const lastRow = sheet.getLastRow();\n  const newId = lastRow + 1;\n  sheet.getRange(newId + 1, 1).setValue(newId);\n  sheet.getRange(newId + 1, 2).setValue(userId);\n  sheet.getRange(newId + 1, 3).setValue(projectName);\n  sheet.getRange(newId + 1, 4).setValue(html);\n  sheet.getRange(newId + 1, 5).setValue(css);\n  sheet.getRange(newId + 1, 6).setValue(js);\n  return newId;\n}\n\nfunction getProjects() {\n  const ss = SpreadsheetApp.getActiveSpreadsheet();\n  const sheet = ss.getSheetByName('Projects');\n  const data = sheet.getDataRange().getValues();\n  const headers = data[0];\n  const projects = [];\n  for (let i = 1; i < data.length; i++) {\n    const project = {};\n    for (let j = 0; j < headers.length; j++) {\n      project[headers[j]] = data[i][j];\n    }\n    projects.push(project);\n  }\n  return projects;\n}`,
-        'database-templates/google-sheets/GUIDE.md': `# 📊 Google Sheets Database Setup\n\n## Langkah 1: Buat Spreadsheet\n1. Buka https://sheets.google.com\n2. Klik tombol "+" untuk membuat spreadsheet baru\n3. Beri nama: "Adjarindo Database"\n\n## Langkah 2: Setup App Script\n1. Klik menu "Extensions" > "Apps Script"\n2. Hapus kode default, paste kode dari file appscript.js\n3. Klik icon disk (Save) atau tekan Ctrl+S\n4. Beri nama project: "Adjarindo DB"\n\n## Langkah 3: Jalankan Script\n1. Pilih fungsi "createTables" di dropdown\n2. Klik tombol "Run" (▶️)\n3. Izinkan akses (klik "Review Permissions" > "Allow")\n4. Selesai! Tabel sudah dibuat.\n\n## Cara Menggunakan\n- Fungsi saveProject() untuk menyimpan project baru\n- Fungsi getProjects() untuk mengambil semua project\n\n💡 Tips: Simpan URL spreadsheet untuk akses mudah.`,
-        'database-templates/supabase/schema.sql': `-- ============================================================\n-- SUPABASE DATABASE SCHEMA\n-- ============================================================\n-- Cara pakai:\n-- 1. Buka https://supabase.com\n-- 2. Buat project baru\n-- 3. Buka SQL Editor\n-- 4. Paste dan run kode ini\n\n-- Tabel Projects\nCREATE TABLE projects (\n  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,\n  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,\n  name TEXT NOT NULL,\n  html TEXT,\n  css TEXT,\n  js TEXT,\n  created_at TIMESTAMPTZ DEFAULT NOW(),\n  updated_at TIMESTAMPTZ DEFAULT NOW()\n);\n\n-- Row Level Security\nALTER TABLE projects ENABLE ROW LEVEL SECURITY;\n\n-- Policy: Users can only see their own projects\nCREATE POLICY "Users can view own projects"\n  ON projects FOR SELECT\n  USING (auth.uid() = user_id);\n\nCREATE POLICY "Users can insert own projects"\n  ON projects FOR INSERT\n  WITH CHECK (auth.uid() = user_id);\n\n-- Indexes\nCREATE INDEX idx_projects_user_id ON projects(user_id);\nCREATE INDEX idx_projects_created_at ON projects(created_at DESC);`,
-        'database-templates/supabase/GUIDE.md': `# 🚀 Supabase Database Setup\n\n## Langkah 1: Buat Akun Supabase\n1. Buka https://supabase.com\n2. Klik "Start your project"\n3. Login dengan GitHub atau email\n\n## Langkah 2: Buat Project Baru\n1. Klik "New project"\n2. Isi:\n   - Name: "adjarindo-db"\n   - Database Password: (buat yang kuat)\n   - Region: Pilih yang terdekat\n3. Klik "Create new project"\n\n## Langkah 3: Setup Database\n1. Di dashboard, klik "SQL Editor"\n2. Klik "New query"\n3. Paste isi file schema.sql\n4. Klik "Run"\n\n## Langkah 4: Dapatkan Credentials\n1. Klik "Settings" > "API"\n2. Copy Project URL dan anon public key`,
-        'database-templates/cloudflare-d1/schema.sql': `-- ============================================================\n-- CLOUDFLARE D1 DATABASE SCHEMA\n-- ============================================================\n-- Cara pakai:\n-- 1. Buka https://dash.cloudflare.com\n-- 2. Pilih "Workers & Pages" > "D1"\n-- 3. Buat database baru\n-- 4. Buka console dan paste kode ini\n\nCREATE TABLE IF NOT EXISTS projects (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  user_id TEXT NOT NULL,\n  name TEXT NOT NULL,\n  html TEXT,\n  css TEXT,\n  js TEXT,\n  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP\n);\n\nCREATE INDEX IF NOT EXISTS idx_projects_user_id ON projects(user_id);\nCREATE INDEX IF NOT EXISTS idx_projects_created_at ON projects(created_at DESC);`,
-        'database-templates/cloudflare-d1/GUIDE.md': `# ⚡ Cloudflare D1 Database Setup\n\n## Langkah 1: Buat Akun Cloudflare\n1. Buka https://dash.cloudflare.com\n2. Buat akun (gratis)\n\n## Langkah 2: Buat Database D1\n1. Klik "Workers & Pages"\n2. Klik tab "D1"\n3. Klik "Create database"\n4. Nama: "adjarindo-db"\n\n## Langkah 3: Setup Schema\n1. Klik database yang baru dibuat\n2. Klik tab "Console"\n3. Paste isi file schema.sql\n4. Klik "Execute"\n\n## Langkah 4: Dapatkan Credentials\n1. Klik tab "API"\n2. Copy Database ID dan Account ID`
+        'database-templates/google-sheets/appscript.js': `
+// ============================================================
+// GOOGLE SHEETS - App Script untuk Database
+// ============================================================
+// Cara pakai:
+// 1. Buka https://sheets.google.com
+// 2. Buat spreadsheet baru
+// 3. Klik Extensions > Apps Script
+// 4. Paste kode ini, klik Save, lalu Run
+
+function createTables() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  // Create Users sheet
+  let sheet = ss.getSheetByName('Users');
+  if (!sheet) {
+    sheet = ss.insertSheet('Users');
+    sheet.getRange('A1:E1').setValues([
+      ['ID', 'Name', 'Email', 'CreatedAt', 'Status']
+    ]);
+    sheet.setFrozenRows(1);
+  }
+  
+  // Create Projects sheet
+  sheet = ss.getSheetByName('Projects');
+  if (!sheet) {
+    sheet = ss.insertSheet('Projects');
+    sheet.getRange('A1:F1').setValues([
+      ['ID', 'UserID', 'ProjectName', 'HTML', 'CSS', 'JS']
+    ]);
+    sheet.setFrozenRows(1);
+  }
+  
+  // Create Logs sheet
+  sheet = ss.getSheetByName('Logs');
+  if (!sheet) {
+    sheet = ss.insertSheet('Logs');
+    sheet.getRange('A1:D1').setValues([
+      ['Timestamp', 'User', 'Action', 'Details']
+    ]);
+    sheet.setFrozenRows(1);
+  }
+  
+  SpreadsheetApp.getUi().alert('✅ Database siap! Tabel Users, Projects, dan Logs telah dibuat.');
+}
+
+// Fungsi untuk menyimpan data
+function saveProject(userId, projectName, html, css, js) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName('Projects');
+  
+  const lastRow = sheet.getLastRow();
+  const newId = lastRow + 1;
+  
+  sheet.getRange(newId + 1, 1).setValue(newId);
+  sheet.getRange(newId + 1, 2).setValue(userId);
+  sheet.getRange(newId + 1, 3).setValue(projectName);
+  sheet.getRange(newId + 1, 4).setValue(html);
+  sheet.getRange(newId + 1, 5).setValue(css);
+  sheet.getRange(newId + 1, 6).setValue(js);
+  
+  return newId;
+}
+
+// Fungsi untuk mendapatkan semua project
+function getProjects() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName('Projects');
+  const data = sheet.getDataRange().getValues();
+  
+  const headers = data[0];
+  const projects = [];
+  
+  for (let i = 1; i < data.length; i++) {
+    const project = {};
+    for (let j = 0; j < headers.length; j++) {
+      project[headers[j]] = data[i][j];
+    }
+    projects.push(project);
+  }
+  
+  return projects;
+}
+        `,
+        'database-templates/google-sheets/GUIDE.md': `# 📊 Google Sheets Database Setup
+
+## Langkah 1: Buat Spreadsheet
+1. Buka https://sheets.google.com
+2. Klik tombol "+" untuk membuat spreadsheet baru
+3. Beri nama: "Adjarindo Database"
+
+## Langkah 2: Setup App Script
+1. Klik menu "Extensions" > "Apps Script"
+2. Hapus kode default, paste kode dari file appscript.js
+3. Klik icon disk (Save) atau tekan Ctrl+S
+4. Beri nama project: "Adjarindo DB"
+
+## Langkah 3: Jalankan Script
+1. Pilih fungsi "createTables" di dropdown
+2. Klik tombol "Run" (▶️)
+3. Izinkan akses (klik "Review Permissions" > "Allow")
+4. Selesai! Tabel sudah dibuat.
+
+## Cara Menggunakan
+- Fungsi saveProject() untuk menyimpan project baru
+- Fungsi getProjects() untuk mengambil semua project
+
+💡 Tips: Simpan URL spreadsheet untuk akses mudah.
+        `,
+        'database-templates/supabase/schema.sql': `
+-- ============================================================
+-- SUPABASE DATABASE SCHEMA
+-- ============================================================
+-- Cara pakai:
+-- 1. Buka https://supabase.com
+-- 2. Buat project baru
+-- 3. Buka SQL Editor
+-- 4. Paste dan run kode ini
+
+-- Tabel Users (auth.users sudah tersedia di Supabase)
+-- Kita tambahkan tabel Projects dan Logs
+
+-- Tabel Projects
+CREATE TABLE projects (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  html TEXT,
+  css TEXT,
+  js TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Tabel Logs
+CREATE TABLE logs (
+  id BIGSERIAL PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  action TEXT NOT NULL,
+  details JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Row Level Security (RLS)
+ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE logs ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Users can only see their own projects
+CREATE POLICY "Users can view own projects"
+  ON projects FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own projects"
+  ON projects FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own projects"
+  ON projects FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own projects"
+  ON projects FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- Policy for logs
+CREATE POLICY "Users can view own logs"
+  ON logs FOR SELECT
+  USING (auth.uid() = user_id);
+
+-- Indexes for performance
+CREATE INDEX idx_projects_user_id ON projects(user_id);
+CREATE INDEX idx_projects_created_at ON projects(created_at DESC);
+CREATE INDEX idx_logs_user_id ON logs(user_id);
+
+-- Trigger untuk auto-update updated_at
+CREATE OR REPLACE FUNCTION update_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_projects_updated_at
+  BEFORE UPDATE ON projects
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at();
+        `,
+        'database-templates/supabase/GUIDE.md': `# 🚀 Supabase Database Setup
+
+## Langkah 1: Buat Akun Supabase
+1. Buka https://supabase.com
+2. Klik "Start your project"
+3. Login dengan GitHub atau email
+
+## Langkah 2: Buat Project Baru
+1. Klik "New project"
+2. Isi:
+   - Name: "adjarindo-db"
+   - Database Password: (buat yang kuat)
+   - Region: Pilih yang terdekat
+3. Klik "Create new project" (tunggu 2-3 menit)
+
+## Langkah 3: Setup Database
+1. Di dashboard, klik "SQL Editor" di sidebar kiri
+2. Klik "New query"
+3. Paste isi file schema.sql
+4. Klik "Run" (▶️)
+
+## Langkah 4: Dapatkan Credentials
+1. Di sidebar kiri, klik "Settings" > "API"
+2. Copy:
+   - Project URL (contoh: https://xxxxx.supabase.co)
+   - anon public key
+
+## Cara Menggunakan
+Simpan credentials di aplikasi Anda untuk koneksi ke Supabase.
+        `,
+        'database-templates/cloudflare-d1/schema.sql': `
+-- ============================================================
+-- CLOUDFLARE D1 DATABASE SCHEMA
+-- ============================================================
+-- Cara pakai:
+-- 1. Buka https://dash.cloudflare.com
+-- 2. Pilih "Workers & Pages" > "D1"
+-- 3. Buat database baru
+-- 4. Buka console dan paste kode ini
+
+-- Tabel Projects
+CREATE TABLE IF NOT EXISTS projects (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  html TEXT,
+  css TEXT,
+  js TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabel Users
+CREATE TABLE IF NOT EXISTS users (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT UNIQUE,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabel Logs
+CREATE TABLE IF NOT EXISTS logs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id TEXT NOT NULL,
+  action TEXT NOT NULL,
+  details TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes
+CREATE INDEX IF NOT EXISTS idx_projects_user_id ON projects(user_id);
+CREATE INDEX IF NOT EXISTS idx_projects_created_at ON projects(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_logs_user_id ON logs(user_id);
+
+-- Trigger untuk auto-update updated_at
+CREATE TRIGGER IF NOT EXISTS update_projects_timestamp 
+AFTER UPDATE ON projects
+BEGIN
+  UPDATE projects SET updated_at = CURRENT_TIMESTAMP
+  WHERE id = NEW.id;
+END;
+        `,
+        'database-templates/cloudflare-d1/GUIDE.md': `# ⚡ Cloudflare D1 Database Setup
+
+## Langkah 1: Buat Akun Cloudflare
+1. Buka https://dash.cloudflare.com
+2. Buat akun (gratis)
+
+## Langkah 2: Buat Database D1
+1. Di dashboard, klik "Workers & Pages"
+2. Klik tab "D1" di sidebar
+3. Klik "Create database"
+4. Nama: "adjarindo-db"
+5. Klik "Create"
+
+## Langkah 3: Setup Schema
+1. Klik database yang baru dibuat
+2. Klik tab "Console"
+3. Paste isi file schema.sql
+4. Klik "Execute"
+
+## Langkah 4: Dapatkan Credentials
+1. Klik tab "API"
+2. Copy:
+   - Database ID
+   - Account ID
+
+## Cara Menggunakan
+Integrasikan dengan Worker Anda menggunakan binding D1.
+        `
     };
 
+    // Add database templates
     Object.keys(dbTemplates).forEach(path => {
         zip.file(path, dbTemplates[path]);
     });
 
     // Deploy Guides
     const deployGuides = {
-        'deploy-guides/cloudflare-pages.md': `# 🚀 Deploy ke Cloudflare Pages (GRATIS!)\n\n## Step 1: Upload ke GitHub (2 menit)\n1. Buka https://github.com dan login\n2. Klik "New" di repositori\n3. Nama: "my-web"\n4. Klik "Create repository"\n5. Drag & drop semua file\n6. Klik "Commit changes"\n\n## Step 2: Deploy ke Cloudflare (3 menit)\n1. Buka https://dash.cloudflare.com\n2. Pilih "Workers & Pages"\n3. Klik "Create application"\n4. Pilih tab "Pages"\n5. Klik "Connect to Git"\n6. Pilih GitHub dan repositori "my-web"\n7. Klik "Save and Deploy"\n\n## Step 3: Selesai!\n🎉 Web online di: https://my-web.pages.dev`,
-        'deploy-guides/vercel.md': `# 🚀 Deploy ke Vercel (GRATIS!)\n\n## Step 1: Upload ke GitHub (2 menit)\n1. Buka https://github.com\n2. Buat repositori baru\n3. Upload semua file\n\n## Step 2: Deploy ke Vercel (3 menit)\n1. Buka https://vercel.com\n2. Login dengan GitHub\n3. Klik "Add New" > "Project"\n4. Pilih repositori\n5. Klik "Deploy"\n\n## Step 3: Selesai!\n🎉 Web online!`,
-        'deploy-guides/netlify.md': `# 🚀 Deploy ke Netlify (GRATIS!)\n\n## Cara Termudah: Drag & Drop\n1. Buka https://app.netlify.com\n2. Login dengan GitHub\n3. Drag folder hasil download ke area drop\n4. Tunggu deploy selesai\n\n## Selesai!\n🎉 Web online!`
+        'deploy-guides/cloudflare-pages.md': `# 🚀 Deploy ke Cloudflare Pages (GRATIS!)
+
+## Step 1: Upload ke GitHub (2 menit)
+1. Buka https://github.com dan login
+2. Klik tombol hijau "New" di repositori
+3. Nama repositori: "my-web"
+4. Klik "Create repository"
+5. Klik "Add file" > "Upload files"
+6. Drag & drop semua file (index.html, style.css, script.js)
+7. Klik "Commit changes"
+
+## Step 2: Deploy ke Cloudflare (3 menit)
+1. Buka https://dash.cloudflare.com
+2. Pilih "Workers & Pages" di sidebar
+3. Klik "Create application"
+4. Pilih tab "Pages"
+5. Klik "Connect to Git"
+6. Pilih GitHub dan repositori "my-web"
+7. Klik "Save and Deploy"
+
+## Step 3: Selesai! (1 menit)
+🎉 Web kamu online di: https://my-web.pages.dev
+
+Bagikan linknya ke semua orang!`,
+        'deploy-guides/vercel.md': `# 🚀 Deploy ke Vercel (GRATIS!)
+
+## Step 1: Upload ke GitHub (2 menit)
+1. Buka https://github.com dan login
+2. Buat repositori baru
+3. Upload semua file
+
+## Step 2: Deploy ke Vercel (3 menit)
+1. Buka https://vercel.com
+2. Login dengan GitHub
+3. Klik "Add New" > "Project"
+4. Pilih repositori "my-web"
+5. Klik "Deploy"
+
+## Step 3: Selesai!
+🎉 Web kamu online!`,
+        'deploy-guides/netlify.md': `# 🚀 Deploy ke Netlify (GRATIS!)
+
+## Cara Termudah: Drag & Drop
+1. Buka https://app.netlify.com
+2. Login dengan GitHub
+3. Drag folder hasil download ke area drop
+4. Tunggu deploy selesai
+
+## Selesai!
+🎉 Web kamu online!`
     };
 
     Object.keys(deployGuides).forEach(path => {
@@ -473,7 +997,31 @@ async function downloadZip() {
     });
 
     // Master Deploy Guide
-    const masterGuide = `# 🚀 PANDUAN DEPLOY WEB (LENGKAP)\n\n## Opsi 1: Cloudflare Pages (Rekomendasi)\n📖 Baca: deploy-guides/cloudflare-pages.md\n- Kelebihan: Cepat, gratis, CDN global\n- Cocok untuk: Semua jenis web\n\n## Opsi 2: Vercel\n📖 Baca: deploy-guides/vercel.md\n- Kelebihan: Mudah, integrasi GitHub bagus\n\n## Opsi 3: Netlify\n📖 Baca: deploy-guides/netlify.md\n- Kelebihan: Drag & drop, simple\n\n## Opsi 4: Database Setup (Opsional)\nJika webmu butuh database:\n- 📊 Google Sheets: database-templates/google-sheets/\n- 🚀 Supabase: database-templates/supabase/\n- ⚡ Cloudflare D1: database-templates/cloudflare-d1/\n\n---\n🎉 Selamat! Web kamu siap untuk di-deploy!`;
+    const masterGuide = `# 🚀 PANDUAN DEPLOY WEB (LENGKAP)
+
+## Opsi 1: Cloudflare Pages (Rekomendasi)
+📖 Baca: deploy-guides/cloudflare-pages.md
+- Kelebihan: Cepat, gratis, CDN global
+- Cocok untuk: Semua jenis web
+
+## Opsi 2: Vercel
+📖 Baca: deploy-guides/vercel.md
+- Kelebihan: Mudah, integrasi GitHub bagus
+- Cocok untuk: Web statis & dinamis
+
+## Opsi 3: Netlify
+📖 Baca: deploy-guides/netlify.md
+- Kelebihan: Drag & drop, simple
+- Cocok untuk: Web statis
+
+## Opsi 4: Database Setup (Opsional)
+Jika webmu butuh database:
+- 📊 Google Sheets: database-templates/google-sheets/
+- 🚀 Supabase: database-templates/supabase/
+- ⚡ Cloudflare D1: database-templates/cloudflare-d1/
+
+---
+🎉 Selamat! Web kamu siap untuk di-deploy!`;
 
     zip.file('DEPLOY_GUIDE.md', masterGuide);
 
@@ -568,6 +1116,7 @@ function initTabs() {
             const tabId = this.dataset.tab + 'Tab';
             document.getElementById(tabId).classList.remove('hidden');
             
+            // Refresh CodeMirror if needed
             if (this.dataset.tab === 'html') {
                 document.getElementById('htmlEditor').focus();
             }
@@ -606,9 +1155,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('downloadBtn').addEventListener('click', downloadZip);
     document.getElementById('codesandboxBtn').addEventListener('click', openInCodeSandbox);
     document.getElementById('logoutBtn').addEventListener('click', logout);
-    
-    // Update token info on input
-    document.getElementById('tokenInput').addEventListener('input', updateTokenInfo);
 });
 
 // ============================================================
