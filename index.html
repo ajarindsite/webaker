@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Adjarindo AI Web Generator</title>
+
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#0f172a" />
+    <link rel="manifest" href='data:application/manifest+json,%7B%22name%22%3A%22Adjarindo%20AI%20Gen%22%2C%22short_name%22%3A%22AdjarindoAI%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230f172a%22%2C%22theme_color%22%3A%22%230f172a%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%253D%2522http%253A%252F%252Fwww.w3.org%252F2000%252Fsvg%2522%2520viewBox%253D%25220%25200%2520100%2520100%2522%253E%253Ctext%2520y%253D%2522.9em%2522%2520font-size%253D%252290%2522%253EA%253C%252Ftext%253E%253C%252Fsvg%253E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D' />
+
+    <!-- CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closetag.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet" />
+
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ==================== LOGIN PAGE ==================== -->
+<div id="loginPage" class="active items-center justify-center p-4">
+  <div class="glass rounded-2xl p-8 max-w-md w-full">
+    <div class="text-center mb-8">
+      <svg class="mx-auto mb-4" width="60" height="60" viewBox="0 0 100 100">
+        <defs><linearGradient id="gradA" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#3b82f6"/><stop offset="50%" style="stop-color:#f97316"/><stop offset="100%" style="stop-color:#8b5cf6"/></linearGradient></defs>
+        <path d="M20 80 L50 10 L80 80 L65 80 L50 45 L35 80 Z" fill="url(#gradA)"/>
+      </svg>
+      <h2 class="text-2xl font-bold">Adjarindo AI Generator</h2>
+      <p class="text-sm text-slate-400 mt-1">Masukkan token untuk mengakses</p>
+    </div>
+
+    <div class="space-y-4">
+      <input type="password" id="tokenInput" class="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500" placeholder="Masukkan token akses" />
+      <button id="loginBtn" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 py-3 rounded-lg font-bold transition transform hover:scale-[1.02]">
+        <i class="fa-solid fa-unlock mr-2"></i>Akses Generator
+      </button>
+      <p id="loginError" class="text-red-400 text-sm text-center hidden">❌ Token salah! Hubungi admin.</p>
+      <p class="text-xs text-slate-500 text-center mt-4">Hubungi admin: <a href="https://wa.me/6282112038795" class="text-blue-400 hover:underline">0821-1203-8795</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== ADMIN DASHBOARD ==================== -->
+<div id="adminDashboard">
+  <div class="container mx-auto p-4 md:p-8">
+    <div class="flex justify-between items-center mb-8">
+      <h2 class="text-3xl font-bold"><i class="fa-solid fa-crown text-yellow-400 mr-3"></i>Admin Dashboard</h2>
+      <button id="backToAppBtn" class="glass hover:bg-white/10 px-4 py-2 rounded-lg transition">
+        <i class="fa-solid fa-arrow-left mr-2"></i>Kembali
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div class="glass p-6 rounded-2xl text-center"><p class="text-3xl font-bold text-blue-400" id="totalUsers">0</p><p class="text-sm text-slate-400">Total Pengguna</p></div>
+      <div class="glass p-6 rounded-2xl text-center"><p class="text-3xl font-bold text-green-400" id="totalGenerations">0</p><p class="text-sm text-slate-400">Total Generate</p></div>
+      <div class="glass p-6 rounded-2xl text-center"><p class="text-3xl font-bold text-purple-400" id="activeUsers">0</p><p class="text-sm text-slate-400">Aktif Hari Ini</p></div>
+    </div>
+
+    <div class="glass p-6 rounded-2xl mb-6">
+      <h3 class="text-xl font-semibold mb-4"><i class="fa-solid fa-key text-yellow-400 mr-2"></i>Generate Token Baru</h3>
+      <div class="flex flex-col md:flex-row gap-4">
+        <input type="text" id="newTokenInput" class="flex-1 bg-slate-800/50 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500" placeholder="Ketik token baru" />
+        <button id="addTokenBtn" class="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg font-bold transition whitespace-nowrap"><i class="fa-solid fa-plus mr-2"></i>Tambah Token</button>
+      </div>
+      <p class="text-xs text-slate-400 mt-2">💡 Token bisa berupa apapun.</p>
+    </div>
+
+    <div class="glass p-6 rounded-2xl">
+      <h3 class="text-xl font-semibold mb-4"><i class="fa-solid fa-list mr-2"></i>Daftar Token Aktif</h3>
+      <div id="tokenList" class="space-y-2 max-h-60 overflow-y-auto"></div>
+      <p class="text-xs text-slate-400 mt-2">⚠️ Token default: <span class="text-blue-400">AJARIND2025</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== APP CONTAINER ==================== -->
+<div id="appContainer">
+  <header class="glass sticky top-0 z-40 p-4 shadow-lg">
+    <div class="container mx-auto flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <svg width="40" height="40" viewBox="0 0 100 100">
+          <defs><linearGradient id="gradHeader" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#3b82f6"/><stop offset="50%" style="stop-color:#f97316"/><stop offset="100%" style="stop-color:#8b5cf6"/></linearGradient></defs>
+          <path d="M20 80 L50 10 L80 80 L65 80 L50 45 L35 80 Z" fill="url(#gradHeader)"/>
+        </svg>
+        <div><h1 class="font-extrabold text-lg leading-tight text-blue-400">Adjarindo</h1><p class="text-[10px] text-slate-400 leading-none">AI Web Generator</p></div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="installBtn" class="hidden bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded-lg text-sm font-semibold transition"><i class="fa-solid fa-download mr-1"></i>Install</button>
+        <button id="settingsBtn" class="bg-slate-700 hover:bg-slate-600 p-2 rounded-lg text-sm transition"><i class="fa-solid fa-gear"></i></button>
+        <button id="adminAccessBtn" class="bg-purple-700/50 hover:bg-purple-600/50 p-2 rounded-lg text-sm transition" title="Admin Dashboard"><i class="fa-solid fa-crown"></i></button>
+        <button id="logoutBtn" class="bg-red-700/50 hover:bg-red-600/50 px-3 py-2 rounded-lg text-sm transition"><i class="fa-solid fa-sign-out-alt"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-grow container mx-auto p-4 md:p-8 grid lg:grid-cols-2 gap-6">
+
+    <!-- LEFT: Form -->
+    <section class="glass rounded-2xl p-6 space-y-4 h-fit">
+      <h2 class="text-xl font-bold mb-4"><i class="fa-solid fa-wand-magic-sparkles text-blue-400 mr-2"></i>Konfigurasi Generate</h2>
+
+      <!-- Mode Selector -->
+      <div>
+        <label class="text-sm text-slate-400 block mb-1">Mode Generate</label>
+        <div class="grid grid-cols-3 gap-2">
+          <button onclick="setMode('fast')" id="modeFast" class="mode-btn active bg-blue-500/30 hover:bg-blue-500/40 text-white py-2 rounded-xl text-sm font-semibold transition-all border border-blue-400/50">
+            <i class="fas fa-bolt mr-1"></i> Fast <span class="block text-[10px] text-blue-300">Landing Page</span>
+          </button>
+          <button onclick="setMode('standar')" id="modeStandar" class="mode-btn bg-white/10 hover:bg-white/20 text-white/70 py-2 rounded-xl text-sm font-semibold transition-all">
+            <i class="fas fa-layer-group mr-1"></i> Standar <span class="block text-[10px] text-white/40">Aplikasi Sedang</span>
+          </button>
+          <button onclick="setMode('pro')" id="modePro" class="mode-btn bg-white/10 hover:bg-white/20 text-white/70 py-2 rounded-xl text-sm font-semibold transition-all">
+            <i class="fas fa-crown mr-1"></i> Pro <span class="block text-[10px] text-white/40">Kompleks</span>
+          </button>
+        </div>
+        <div id="statusMode" class="text-xs text-slate-400 mt-1">Mode: Standar (Aplikasi Sedang)</div>
+      </div>
+
+      <!-- Template Prompt -->
+      <div>
+        <label class="text-sm text-slate-400 block mb-1">Template Prompt</label>
+        <select id="templateSelect" class="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2.5 text-sm focus:outline-none focus:border-blue-500">
+          <option value="landing">🏠 Landing Page / Company Profile</option>
+          <option value="aplikasi">📱 Aplikasi Fungsional (Kas RT, Todo, dll)</option>
+          <option value="multitab">📂 Multi-Tab / Berantai (Otomasi Guru)</option>
+          <option value="custom">✏️ Custom (isi sendiri)</option>
+        </select>
+      </div>
+
+      <!-- Prompt -->
+      <div>
+        <label class="text-sm text-slate-400 block mb-1">Deskripsi Web / Aplikasi</label>
+        <textarea id="promptInput" class="w-full h-32 bg-slate-800/50 border border-slate-700 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 resize-none" placeholder="Tulis prompt atau pilih template di atas..."></textarea>
+      </div>
+
+      <!-- AI Engine Selector -->
+      <div class="border border-slate-700 rounded-lg p-4">
+        <label class="text-sm text-slate-400 block mb-2">Pilih AI Engine</label>
+        <div class="flex flex-wrap gap-2">
+          <button data-ai="gemini" class="ai-engine-btn active bg-blue-600 px-4 py-2 rounded-lg text-sm font-semibold transition">
+            <i class="fa-brands fa-google mr-1"></i>Gemini 2.5 Flash
+            <span class="text-[10px] block text-blue-200">Gratis & cepat</span>
+          </button>
+          <button data-ai="groq" class="ai-engine-btn bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm font-semibold transition">
+            <i class="fa-solid fa-bolt mr-1"></i>Groq
+            <span class="text-[10px] block text-slate-400">Pilih model di bawah</span>
+          </button>
+        </div>
+        <div id="groqSelector" class="hidden mt-3">
+          <label class="text-sm text-slate-400 block mb-1">Pilih Model Groq</label>
+          <select id="groqModel" class="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2.5 text-sm focus:outline-none focus:border-blue-500">
+            <optgroup label="Groq Official">
+              <option value="groq/compound">Compound ⭐ Terbaru</option>
+              <option value="groq/compound-mini">Compound Mini ⚡ Cepat</option>
+            </optgroup>
+            <optgroup label="Alibaba Cloud (Qwen)">
+              <option value="qwen/qwen3.6-27b">Qwen 3.6 27B</option>
+              <option value="qwen/qwen3.8-27b">Qwen 3.8 27B</option>
+            </optgroup>
+            <optgroup label="OpenAI OSS">
+              <option value="openai/gpt-oss-120b">GPT-OSS 120B ⭐</option>
+              <option value="openai/gpt-oss-20b">GPT-OSS 20B</option>
+            </optgroup>
+          </select>
+          <p class="text-[10px] text-slate-500 mt-1">💡 Compound atau Qwen paling stabil untuk kode panjang</p>
+        </div>
+      </div>
+
+      <!-- Framework -->
+      <div>
+        <label class="text-sm text-slate-400 block mb-1">Framework CSS</label>
+        <select id="framework" class="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2.5 text-sm focus:outline-none focus:border-blue-500">
+          <option value="Tailwind CSS (CDN)">Tailwind CSS ⚡</option>
+          <option value="Bootstrap 5 (CDN)">Bootstrap 5 🎨</option>
+          <option value="Bulma (CDN)">Bulma 📦</option>
+          <option value="Pure CSS / Custom">Pure CSS 🧩</option>
+        </select>
+      </div>
+
+      <!-- Konsep Desain -->
+      <div>
+        <label class="text-sm text-slate-400 block mb-1">Konsep Desain</label>
+        <select id="style" class="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2.5 text-sm focus:outline-none focus:border-blue-500">
+          <option value="Glassmorphism">Glassmorphism ✨</option>
+          <option value="Minimalis Flat">Minimalis Flat 🎯</option>
+          <option value="Dark Mode Modern">Dark Mode Modern 🌙</option>
+          <option value="Gradient Vibes">Gradient Vibes 🌈</option>
+        </select>
+      </div>
+
+      <!-- Font & Icons -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="text-sm text-slate-400 block mb-1">Font Google</label>
+          <select id="font" class="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2.5 text-sm focus:outline-none focus:border-blue-500">
+            <option value="Plus Jakarta Sans">Plus Jakarta Sans</option>
+            <option value="Poppins">Poppins</option>
+            <option value="Inter">Inter</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-sm text-slate-400 block mb-1">Library Icon</label>
+          <select id="icons" class="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2.5 text-sm focus:outline-none focus:border-blue-500">
+            <option value="Font Awesome 6">Font Awesome 6 ⭐</option>
+            <option value="Boxicons">Boxicons 📦</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tombol Generate -->
+      <button onclick="generate()" id="btnGen" class="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-5 py-3 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2">
+        <i class="fas fa-magic"></i> Generate
+      </button>
+      <div id="statusLog" class="text-xs text-slate-500 mt-2 font-mono min-h-[20px]"></div>
+    </section>
+
+    <!-- RIGHT: Output -->
+    <section class="glass rounded-2xl p-6 flex flex-col">
+      <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
+        <h2 class="text-xl font-bold"><i class="fa-solid fa-code text-purple-400 mr-2"></i>Hasil & Preview</h2>
+        <div class="flex gap-2">
+          <button id="codesandboxBtn" disabled class="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition">
+            <i class="fa-solid fa-cube mr-1"></i>CodeSandbox
+          </button>
+          <button id="downloadBtn" disabled class="bg-green-600 hover:bg-green-700 px-3 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition">
+            <i class="fa-solid fa-file-zipper mr-1"></i>Download .zip
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="flex gap-2 border-b border-slate-700 mb-4 flex-wrap">
+        <button data-tab="preview" class="tab-btn active px-4 py-2 text-sm font-semibold border-b-2 border-blue-500 text-blue-400 transition">Preview</button>
+        <button data-tab="html" class="tab-btn px-4 py-2 text-sm font-semibold border-b-2 border-transparent text-slate-400 transition">HTML</button>
+        <button data-tab="css" class="tab-btn px-4 py-2 text-sm font-semibold border-b-2 border-transparent text-slate-400 transition">CSS</button>
+        <button data-tab="js" class="tab-btn px-4 py-2 text-sm font-semibold border-b-2 border-transparent text-slate-400 transition">JS</button>
+      </div>
+
+      <!-- Tab Content -->
+      <div class="flex-grow min-h-[400px] bg-slate-950/50 rounded-xl overflow-hidden border border-slate-800">
+        <div id="previewTab" class="tab-content w-full h-full">
+          <iframe id="previewFrame" class="w-full h-[400px] md:h-full bg-white" sandbox="allow-scripts allow-forms"></iframe>
+        </div>
+        <div id="htmlTab" class="tab-content hidden h-[400px] md:h-full">
+          <textarea id="htmlEditor" class="w-full h-full bg-slate-900 text-green-400 p-4 text-sm font-mono resize-none focus:outline-none"></textarea>
+        </div>
+        <div id="cssTab" class="tab-content hidden h-[400px] md:h-full">
+          <textarea id="cssEditor" class="w-full h-full bg-slate-900 text-blue-400 p-4 text-sm font-mono resize-none focus:outline-none"></textarea>
+        </div>
+        <div id="jsTab" class="tab-content hidden h-[400px] md:h-full">
+          <textarea id="jsEditor" class="w-full h-full bg-slate-900 text-yellow-400 p-4 text-sm font-mono resize-none focus:outline-none"></textarea>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="glass mt-8 py-8 px-4 text-center text-slate-400 text-sm">
+    <div class="container mx-auto">
+      <div class="flex justify-center mb-4">
+        <svg width="40" height="40" viewBox="0 0 100 100">
+          <defs><linearGradient id="gradFooter" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#3b82f6"/><stop offset="50%" style="stop-color:#f97316"/><stop offset="100%" style="stop-color:#8b5cf6"/></linearGradient></defs>
+          <path d="M20 80 L50 10 L80 80 L65 80 L50 45 L35 80 Z" fill="url(#gradFooter)"/>
+        </svg>
+      </div>
+      <p class="font-bold text-slate-300 mb-2">Copyright Adjarindo Creative Aksara</p>
+      <p class="mb-2">Alamanda Regency, Jl. Kenanga 3. Blok K10/20. Karangsatria. Tambun Utara. Kab.Bekasi.</p>
+      <p class="mb-2"><i class="fa-solid fa-phone mr-1"></i>Telp/WA: <a href="https://wa.me/6282112038795" class="text-blue-400 hover:underline">0821-1203-8795</a> atau <a href="https://wa.me/6285710908070" class="text-blue-400 hover:underline">0857-1090-8070</a></p>
+      <p class="mb-2"><i class="fa-solid fa-envelope mr-1"></i>Email: <a href="mailto:ajarind890@gmail.com" class="text-blue-400 hover:underline">ajarind890@gmail.com</a></p>
+      <p><i class="fa-solid fa-globe mr-1"></i>Web: <a href="https://AjarInd.web.id" target="_blank" class="text-blue-400 hover:underline">AjarInd.web.id</a></p>
+    </div>
+  </footer>
+</div>
+
+<!-- ==================== SETTINGS MODAL ==================== -->
+<div id="settingsModal" class="fixed inset-0 bg-black/70 z-50 hidden items-center justify-center p-4">
+  <div class="glass rounded-2xl p-6 w-full max-w-md space-y-4 relative max-h-[90vh] overflow-y-auto">
+    <button id="closeSettings" class="absolute top-4 right-4 text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+    <h2 class="text-xl font-bold mb-4"><i class="fa-solid fa-key text-yellow-400 mr-2"></i>Pengaturan API</h2>
+    <p class="text-xs text-slate-400">API Key disimpan lokal di browser kamu (localStorage). Gunakan Free Tier.</p>
+
+    <div>
+      <label class="text-sm text-slate-400 block mb-1">Gemini API Key (2.5 Flash)</label>
+      <input type="password" id="geminiKeyInput" class="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2.5 text-sm focus:outline-none focus:border-blue-500" placeholder="AIza..." />
+      <p class="text-[10px] text-slate-500 mt-1">Dapatkan di <a href="https://aistudio.google.com/apikey" target="_blank" class="text-blue-400 hover:underline">Google AI Studio</a> (Gratis)</p>
+    </div>
+
+    <div>
+      <label class="text-sm text-slate-400 block mb-1">Groq API Key</label>
+      <input type="password" id="groqKeyInput" class="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2.5 text-sm focus:outline-none focus:border-blue-500" placeholder="gsk_..." />
+      <p class="text-[10px] text-slate-500 mt-1">Dapatkan di <a href="https://console.groq.com/keys" target="_blank" class="text-blue-400 hover:underline">Groq Console</a> (Gratis)</p>
+    </div>
+
+    <button id="saveKeysBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition"><i class="fa-solid fa-save mr-2"></i>Simpan API Key</button>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
