@@ -615,7 +615,7 @@ async function generateCode() {
 }
 
 async function callGemini(prompt, apiKey) {
-    var response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-exp:generateContent?key=' + apiKey, {
+    var response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + apiKey, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
