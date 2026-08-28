@@ -643,7 +643,7 @@ async function callGemini(prompt, apiKey) {
 
 async function callGroq(prompt, apiKey) {
     var groqModel = document.getElementById('groqModel');
-    var model = groqModel ? groqModel.value : 'mixtral-8x7b-32768';
+    var model = groqModel ? groqModel.value : 'groq/compound'; // DEFAULT ke Compound
     
     var response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
@@ -652,7 +652,7 @@ async function callGroq(prompt, apiKey) {
             'Authorization': 'Bearer ' + apiKey
         },
         body: JSON.stringify({
-            model: model,
+            model: model,  // ← PAKAI MODEL DARI DROPDOWN
             messages: [
                 { role: 'system', content: 'You are a helpful AI that only outputs valid JSON. The JSON must be valid and parseable.' },
                 { role: 'user', content: prompt }
